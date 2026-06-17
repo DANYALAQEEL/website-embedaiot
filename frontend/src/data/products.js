@@ -1,35 +1,35 @@
 const products = [
     {
         id: 1,
-        slug: "smart-ev-charger",
-        name: "Smart EV Charger",
-        category: "EV Solutions",
+        slug: "air-purifiers",
+        name: "Air Purifier",
+        category: "Air Quality",
         image: "/products/air purifier.png",
         description:
-            "AI-powered EV charging station with real-time monitoring, smart scheduling, and mobile app integration.",
-        technologies: ["AI", "IoT", "Cloud Monitoring", "Mobile App"],
+            "Air purifiers help improve indoor air quality. Equipped with a True HEPA filter, they effectively trap up to 99.97% of airborne irritants like dust, pollen, pet dander, and smoke.",
+        technologies: ["True HEPA Filter", "Activated Carbon", "UV-C Pathogen Light", "Smart Air Sensors"],
         features: [
-            "Real-time charging analytics",
-            "Mobile app integration",
-            "Smart scheduling",
-            "Remote monitoring",
+            "Allergy Relief: Lowers allergen load in the room to reduce sneezing, congestion, and allergy flare-ups.",
+            "Asthma Management: Clears out smoke, dust, and fine particulate matter to reduce asthma triggers.",
+            "Smoke & Odors: Highly effective at neutralizing cooking smells, VOCs, and smoke odors.",
+            "Viruses & Pathogens: High-efficiency filters trap microscopic particles containing airborne viruses.",
         ],
     },
 
     {
         id: 2,
-        slug: "solar-energy-management",
-        name: "Solar Energy Management System",
-        category: "Energy Solutions",
+        slug: "soil-moisture-meter",
+        name: "Soil Moisture Meter",
+        category: "Smart Agriculture",
         image: "/products/soil moisture meter.png",
         description:
-            "Monitor solar production, optimize energy usage, and reduce electricity costs with AI analytics.",
-        technologies: ["Solar Tech", "Analytics", "IoT Sensors", "Dashboard"],
+            "A soil moisture meter measures water levels in soil with a metal probe, taking the guesswork out of watering to protect plants from overwatering or underwatering.",
+        technologies: ["Galvanic Sensors", "Analog/Digital Display", "Electrical Resistance"],
         features: [
-            "Solar monitoring",
-            "Energy analytics",
-            "AI optimization",
-            "Remote dashboard access",
+            "Root Rot Prevention: Gives accurate readings to help you avoid overwatering or underwatering.",
+            "Galvanic Probe Action: Dissimilar metals create a tiny electrical current to scale water content.",
+            "Soil Type Adaptation: Works reliably in sandy, clay, and loamy soils at varying root depths.",
+            "Smart Drip Automation: Can integrate with smart drip systems to automate watering cycles.",
         ],
     },
 
