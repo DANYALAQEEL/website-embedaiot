@@ -188,6 +188,37 @@ export default function AdminPortal() {
         setActiveTab("dashboard");
     };
 
+    // Auto sign out after 15 minutes of inactivity
+    useEffect(() => {
+        if (!isLoggedIn) return;
+
+        const INACTIVITY_TIMEOUT = 15 * 60 * 1000; // 15 minutes
+        let timeoutId;
+
+        const resetTimer = () => {
+            if (timeoutId) clearTimeout(timeoutId);
+            timeoutId = setTimeout(() => {
+                handleLogout();
+                triggerAlert("Logged out due to inactivity", "error");
+            }, INACTIVITY_TIMEOUT);
+        };
+
+        const activityEvents = ["mousedown", "mousemove", "keypress", "scroll", "touchstart"];
+        activityEvents.forEach(event => {
+            window.addEventListener(event, resetTimer);
+        });
+
+        resetTimer();
+
+        return () => {
+            if (timeoutId) clearTimeout(timeoutId);
+            activityEvents.forEach(event => {
+                window.removeEventListener(event, resetTimer);
+            });
+        };
+    }, [isLoggedIn]);
+
+
     // Generic API call helper (POST/PUT/DELETE)
     const handleApiRequest = async (url, method, formData) => {
         const headers = { "Authorization": `Bearer ${token}` };
