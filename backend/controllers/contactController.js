@@ -26,23 +26,12 @@ const createContact = async (req, res) => {
     if (process.env.EMAIL_USER && process.env.EMAIL_PASS) {
       // STEP 3 — send email to your client
       await transporter.sendMail({
-        from: `"Embed AIoT Website" <${process.env.EMAIL_USER}>`,
+        from: `"${name}" <${email}>`,
         replyTo: email,
         to: process.env.EMAIL_RECEIVER || "embedaiot@gmail.com",      
         subject: `New Contact Message from ${name}: ${subject}`,
-
-        html: `
-          <h2>New message from your website</h2>
-          <p><strong>Name:</strong> ${name}</p>
-          <p><strong>Email:</strong> ${email}</p>
-          <p><strong>Message:</strong></p>
-          <p>${message}</p>
-          <hr/>
-          <p style="color:gray; font-size:12px">
-            Received on ${new Date().toLocaleString()}
-          </p>
-        `,
-
+        text: `Hi, I am ${name}.\n\n${message}`,
+        html: `<p>Hi, I am <strong>${name}</strong>.</p><p>${message}</p>`,
       });
 
       // STEP 4 — send confirmation email to the person who contacted
