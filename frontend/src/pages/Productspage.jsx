@@ -174,15 +174,20 @@ export default function ProductsPage() {
                     </p>
 
                     <div className="flex flex-col sm:flex-row gap-5 justify-center">
-                        <a
-                            href="mailto:info@embedaiot.com?subject=Product Inquiry"
+                        <button
+                            onClick={() => {
+                                const contactSec = document.getElementById("contact");
+                                if (contactSec) {
+                                    contactSec.scrollIntoView({ behavior: "smooth" });
+                                }
+                            }}
                             className="inline-flex items-center justify-center gap-3 px-8 py-4 rounded-2xl bg-gradient-to-r from-cyan-400 to-blue-500 text-black font-bold hover:scale-105 transition-all duration-300"
                         >
                             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                                 <path d="M24 5.457v13.909c0 .904-.732 1.636-1.636 1.636h-3.819V11.73L12 16.64l-6.545-4.91v9.273H1.636A1.636 1.636 0 0 1 0 19.366V5.457c0-2.023 2.309-3.178 3.927-1.964L5.455 4.64 12 9.548l6.545-4.91 1.528-1.145C21.69 2.28 24 3.434 24 5.457z" fill="currentColor" />
                             </svg>
                             Email Us
-                        </a>
+                        </button>
 
                         <a
                             href="https://wa.me/923335436531?text=Hi%20Embed%20AIOT%2C%20I%27m%20interested%20in%20your%20products"
