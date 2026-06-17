@@ -3,8 +3,10 @@ import { useState, useEffect } from "react";
 export default function AdminPortal() {
     const [isLoggedIn, setIsLoggedIn] = useState(false);
     const [token, setToken] = useState("");
+    const [role, setRole] = useState("staff");
+    const [name, setName] = useState("");
     const [activeTab, setActiveTab] = useState("dashboard"); // dashboard, messages, portfolio, services, products, team, stories
-    const [authMode, setAuthMode] = useState("login"); // login, register
+    const [authMode, setAuthMode] = useState("login"); // login
 
     // Auth Forms
     const [authForm, setAuthForm] = useState({ name: "", email: "", password: "" });
@@ -31,6 +33,7 @@ export default function AdminPortal() {
     const [products, setProducts] = useState([]);
     const [team, setTeam] = useState([]);
     const [stories, setStories] = useState([]);
+    const [users, setUsers] = useState([]);
 
     // Edit Item IDs
     const [editId, setEditId] = useState("");
@@ -41,6 +44,7 @@ export default function AdminPortal() {
     const [productForm, setProductForm] = useState({ title: "", price: "", category: "", description: "", technologies: "", features: "", featured: "false" });
     const [teamForm, setTeamForm] = useState({ name: "", role: "", department: "", featured: "false" });
     const [storyForm, setStoryForm] = useState({ title: "", description: "", order: "1" });
+    const [userForm, setUserForm] = useState({ name: "", email: "", password: "", role: "staff" });
 
     // File Uploads
     const [uploadedFile, setUploadedFile] = useState(null);
@@ -54,8 +58,12 @@ export default function AdminPortal() {
     // Check localStorage on mount
     useEffect(() => {
         const storedToken = localStorage.getItem("adminToken");
+        const storedRole = localStorage.getItem("adminRole") || "staff";
+        const storedName = localStorage.getItem("adminName") || "";
         if (storedToken) {
             setToken(storedToken);
+            setRole(storedRole);
+            setName(storedName);
             setIsLoggedIn(true);
             loadDashboardCounts(storedToken);
             loadTabData(activeTab, storedToken);
@@ -126,6 +134,10 @@ export default function AdminPortal() {
                 const res = await fetch("http://localhost:5000/api/stories");
                 const data = await res.json();
                 if (Array.isArray(data)) setStories(data);
+            } else if (tab === "users") {
+                const res = await fetch("http://localhost:5000/api/admin/users", { headers });
+                const data = await res.json();
+                if (Array.isArray(data)) setUsers(data);
             }
         } catch (err) {
             console.error("Error loading tab data:", err);
@@ -137,13 +149,10 @@ export default function AdminPortal() {
         setAuthError("");
         setAuthSuccess("");
 
-        const endpoint = authMode === "login" ? "login" : "register";
-        const body = authMode === "login"
-            ? { email: authForm.email, password: authForm.password }
-            : authForm;
+        const body = { email: authForm.email, password: authForm.password };
 
         try {
-            const res = await fetch(`http://localhost:5000/api/admin/${endpoint}`, {
+            const res = await fetch("http://localhost:5000/api/admin/login", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(body),
@@ -152,17 +161,15 @@ export default function AdminPortal() {
 
             if (!res.ok) throw new Error(data.message || "Authentication failed");
 
-            if (authMode === "login") {
-                localStorage.setItem("adminToken", data.token);
-                setToken(data.token);
-                setIsLoggedIn(true);
-                setAuthSuccess("Login successful!");
-                setActiveTab("dashboard");
-            } else {
-                setAuthSuccess("Admin registered! You can now sign in.");
-                setAuthMode("login");
-                setAuthForm({ name: "", email: "", password: "" });
-            }
+            localStorage.setItem("adminToken", data.token);
+            localStorage.setItem("adminRole", data.role || "staff");
+            localStorage.setItem("adminName", data.name || "User");
+            setToken(data.token);
+            setRole(data.role || "staff");
+            setName(data.name || "User");
+            setIsLoggedIn(true);
+            setAuthSuccess("Login successful!");
+            setActiveTab("dashboard");
         } catch (err) {
             setAuthError(err.message);
         }
@@ -170,7 +177,11 @@ export default function AdminPortal() {
 
     const handleLogout = () => {
         localStorage.removeItem("adminToken");
+        localStorage.removeItem("adminRole");
+        localStorage.removeItem("adminName");
         setToken("");
+        setRole("staff");
+        setName("");
         setIsLoggedIn(false);
         setActiveTab("dashboard");
     };
@@ -178,6 +189,9 @@ export default function AdminPortal() {
     // Generic API call helper (POST/PUT/DELETE)
     const handleApiRequest = async (url, method, formData) => {
         const headers = { "Authorization": `Bearer ${token}` };
+        if (typeof formData === "string") {
+            headers["Content-Type"] = "application/json";
+        }
         
         // Let browser set multipart boundary if body is FormData
         const options = {
@@ -485,6 +499,30 @@ export default function AdminPortal() {
         setUploadedFile(null);
     };
 
+    // ── USERS ACTIONS ──
+    const createUser = async (e) => {
+        e.preventDefault();
+        try {
+            await handleApiRequest("http://localhost:5000/api/admin/register", "POST", JSON.stringify(userForm));
+            triggerAlert("Account created successfully!");
+            setUserForm({ name: "", email: "", password: "", role: "staff" });
+            loadTabData("users", token);
+        } catch (err) {
+            triggerAlert(err.message, "error");
+        }
+    };
+
+    const deleteUser = async (id) => {
+        if (!window.confirm("Are you sure you want to delete this account?")) return;
+        try {
+            await handleApiRequest(`http://localhost:5000/api/admin/users/${id}`, "DELETE");
+            triggerAlert("Account deleted successfully!");
+            loadTabData("users", token);
+        } catch (err) {
+            triggerAlert(err.message, "error");
+        }
+    };
+
     // ── MESSAGES ACTIONS ──
     const deleteMessage = async (id) => {
         if (!window.confirm("Delete this message?")) return;
@@ -510,25 +548,11 @@ export default function AdminPortal() {
                             Embed AIoT Portal
                         </h1>
                         <p className="text-gray-400 text-sm mt-2">
-                            {authMode === "login" ? "Sign in to access control dashboard" : "Register a new administrator account"}
+                            Sign in to access control dashboard
                         </p>
                     </div>
 
                     <form onSubmit={handleAuthSubmit} className="space-y-5">
-                        {authMode === "register" && (
-                            <div>
-                                <label className="block text-xs font-semibold text-gray-400 mb-1 uppercase tracking-wider">Full Name</label>
-                                <input
-                                    type="text"
-                                    required
-                                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-amber-400 transition"
-                                    placeholder="John Doe"
-                                    value={authForm.name}
-                                    onChange={e => setAuthForm({ ...authForm, name: e.target.value })}
-                                />
-                            </div>
-                        )}
-
                         <div>
                             <label className="block text-xs font-semibold text-gray-400 mb-1 uppercase tracking-wider">Email Address</label>
                             <input
@@ -569,27 +593,9 @@ export default function AdminPortal() {
                             type="submit"
                             className="w-full py-3 bg-gradient-to-r from-amber-400 to-yellow-500 text-black font-bold rounded-xl hover:scale-[1.02] transition duration-300"
                         >
-                            {authMode === "login" ? "Sign In" : "Register Admin"}
+                            Sign In
                         </button>
                     </form>
-
-                    <div className="mt-6 text-center text-sm text-gray-400">
-                        {authMode === "login" ? (
-                            <p>
-                                Need an account?{" "}
-                                <button onClick={() => { setAuthMode("register"); setAuthError(""); }} className="text-amber-400 font-semibold hover:underline bg-transparent border-none cursor-pointer">
-                                    Register here
-                                </button>
-                            </p>
-                        ) : (
-                            <p>
-                                Already have an account?{" "}
-                                <button onClick={() => { setAuthMode("login"); setAuthError(""); }} className="text-amber-400 font-semibold hover:underline bg-transparent border-none cursor-pointer">
-                                    Sign in here
-                                </button>
-                            </p>
-                        )}
-                    </div>
                 </div>
             </div>
         );
@@ -615,28 +621,34 @@ export default function AdminPortal() {
                     <p className="text-[11px] text-gray-500 mt-1 uppercase font-semibold">Admin Panel</p>
                 </div>
                 <nav className="flex-1 py-4 space-y-1">
-                    {[
-                        { id: "dashboard", label: "Dashboard", icon: "📊" },
-                        { id: "messages", label: "Messages", icon: "✉️" },
-                        { id: "portfolio", label: "Portfolio", icon: "📁" },
-                        { id: "services", label: "Services", icon: "⚙️" },
-                        { id: "products", label: "Products", icon: "📦" },
-                        { id: "team", label: "Team", icon: "👥" },
-                        { id: "stories", label: "Our Story", icon: "📖" }
-                    ].map(tab => (
-                        <button
-                            key={tab.id}
-                            onClick={() => { setActiveTab(tab.id); setEditId(""); }}
-                            className={`w-full flex items-center gap-3 px-6 py-3 text-sm font-medium transition text-left border-l-4 ${
-                                activeTab === tab.id
-                                    ? "text-cyan-400 bg-[#0d1829] border-cyan-400"
-                                    : "text-gray-400 border-transparent hover:text-cyan-400 hover:bg-[#0d1829]"
-                            }`}
-                        >
-                            <span>{tab.icon}</span>
-                            <span>{tab.label}</span>
-                        </button>
-                    ))}
+                    {(() => {
+                        const tabs = [
+                            { id: "dashboard", label: "Dashboard", icon: "📊" },
+                            { id: "messages", label: "Messages", icon: "✉️" },
+                            { id: "portfolio", label: "Portfolio", icon: "📁" },
+                            { id: "services", label: "Services", icon: "⚙️" },
+                            { id: "products", label: "Products", icon: "📦" },
+                            { id: "team", label: "Team", icon: "👥" },
+                            { id: "stories", label: "Our Story", icon: "📖" }
+                        ];
+                        if (role === "admin") {
+                            tabs.push({ id: "users", label: "Staff & Admins", icon: "🔑" });
+                        }
+                        return tabs.map(tab => (
+                            <button
+                                key={tab.id}
+                                onClick={() => { setActiveTab(tab.id); setEditId(""); }}
+                                className={`w-full flex items-center gap-3 px-6 py-3 text-sm font-medium transition text-left border-l-4 ${
+                                    activeTab === tab.id
+                                        ? "text-cyan-400 bg-[#0d1829] border-cyan-400"
+                                        : "text-gray-400 border-transparent hover:text-cyan-400 hover:bg-[#0d1829]"
+                                }`}
+                            >
+                                <span>{tab.icon}</span>
+                                <span>{tab.label}</span>
+                            </button>
+                        ));
+                    })()}
                 </nav>
                 <div className="p-4 border-t border-[#1a2a3a]">
                     <button
@@ -1178,6 +1190,118 @@ export default function AdminPortal() {
                                                             <button onClick={() => editStory(s)} className="px-3 py-1.5 bg-slate-800 border border-slate-700 text-gray-300 text-xs rounded hover:text-white transition">Edit</button>
                                                             <button onClick={() => deleteStory(s._id)} className="px-3 py-1.5 bg-red-600/10 border border-red-500/20 text-red-400 text-xs rounded hover:bg-red-600 hover:text-white transition">Delete</button>
                                                         </div>
+                                                    </td>
+                                                </tr>
+                                            ))
+                                        )}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* Users Tab */}
+                {activeTab === "users" && role === "admin" && (
+                    <div>
+                        <div className="mb-8">
+                            <h1 className="text-3xl font-bold">Staff & Admins</h1>
+                            <p className="text-gray-500 text-sm mt-1">Manage portal administrator and staff accounts.</p>
+                        </div>
+
+                        {/* User Form */}
+                        <div className="bg-[#050a14] border border-[#1a2a3a] rounded-2xl p-6 mb-8">
+                            <h2 className="text-lg font-bold border-b border-[#1a2a3a] pb-3 mb-5">Create New Account</h2>
+                            <form onSubmit={createUser} className="space-y-4">
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div className="flex flex-col gap-1.5">
+                                        <label className="text-[11px] text-gray-400 font-semibold uppercase">Full Name</label>
+                                        <input 
+                                            type="text" 
+                                            required 
+                                            placeholder="e.g. Maryam Ishtiaq" 
+                                            value={userForm.name} 
+                                            onChange={e => setUserForm({ ...userForm, name: e.target.value })} 
+                                        />
+                                    </div>
+                                    <div className="flex flex-col gap-1.5">
+                                        <label className="text-[11px] text-gray-400 font-semibold uppercase">Email Address</label>
+                                        <input 
+                                            type="email" 
+                                            required 
+                                            placeholder="e.g. maryam@embedaiot.com" 
+                                            value={userForm.email} 
+                                            onChange={e => setUserForm({ ...userForm, email: e.target.value })} 
+                                        />
+                                    </div>
+                                </div>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div className="flex flex-col gap-1.5">
+                                        <label className="text-[11px] text-gray-400 font-semibold uppercase">Password</label>
+                                        <input 
+                                            type="password" 
+                                            required 
+                                            placeholder="••••••••" 
+                                            value={userForm.password} 
+                                            onChange={e => setUserForm({ ...userForm, password: e.target.value })} 
+                                        />
+                                    </div>
+                                    <div className="flex flex-col gap-1.5">
+                                        <label className="text-[11px] text-gray-400 font-semibold uppercase">Role</label>
+                                        <select 
+                                            value={userForm.role} 
+                                            onChange={e => setUserForm({ ...userForm, role: e.target.value })}
+                                        >
+                                            <option value="staff">Staff (Limited View)</option>
+                                            <option value="admin">Admin (Full Control)</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div className="pt-2">
+                                    <button type="submit" className="btn btn-primary">Create Account</button>
+                                </div>
+                            </form>
+                        </div>
+
+                        {/* Users List */}
+                        <div className="bg-[#050a14] border border-[#1a2a3a] rounded-2xl p-6">
+                            <h2 className="text-lg font-bold border-b border-[#1a2a3a] pb-3 mb-5">Active Accounts</h2>
+                            <div className="table-wrap">
+                                <table>
+                                    <thead>
+                                        <tr>
+                                            <th>Name</th>
+                                            <th>Email</th>
+                                            <th>Role</th>
+                                            <th>Created At</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {users.length === 0 ? (
+                                            <tr>
+                                                <td colSpan="5" className="text-center py-8 text-gray-500">No registered accounts found in database.</td>
+                                            </tr>
+                                        ) : (
+                                            users.map(u => (
+                                                <tr key={u._id}>
+                                                    <td><strong>{u.name}</strong></td>
+                                                    <td>{u.email}</td>
+                                                    <td>
+                                                        <span className={`badge ${u.role === "admin" ? "badge-green" : "badge-cyan"}`}>
+                                                            {u.role ? u.role.toUpperCase() : "STAFF"}
+                                                        </span>
+                                                    </td>
+                                                    <td className="text-xs text-gray-400">
+                                                        {u.createdAt ? new Date(u.createdAt).toLocaleDateString() : "—"}
+                                                    </td>
+                                                    <td>
+                                                        <button 
+                                                            onClick={() => deleteUser(u._id)} 
+                                                            className="px-3 py-1.5 bg-red-600/10 border border-red-500/20 text-red-400 text-xs rounded hover:bg-red-600 hover:text-white transition"
+                                                        >
+                                                            Delete
+                                                        </button>
                                                     </td>
                                                 </tr>
                                             ))
