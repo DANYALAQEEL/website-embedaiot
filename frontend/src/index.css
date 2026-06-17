@@ -52,3 +52,102 @@ body {
         word-break: break-word;
     }
 }
+
+/* ── ADMIN DASHBOARD CLASSES ── */
+.btn {
+    padding: 10px 20px;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    transition: all 0.2s;
+}
+.btn-primary {
+    background: #22d3ee;
+    color: #000;
+}
+.btn-primary:hover {
+    background: #06b6d4;
+}
+.btn-danger {
+    background: #dc2626;
+    color: #fff;
+}
+.btn-danger:hover {
+    background: #b91c1c;
+}
+.btn-secondary {
+    background: #1e293b;
+    color: #94a3b8;
+    border: 1px solid #334155;
+}
+.btn-secondary:hover {
+    background: #334155;
+    color: #fff;
+}
+.btn-sm {
+    padding: 6px 14px;
+    font-size: 12px;
+}
+.btn-row {
+    display: flex;
+    gap: 10px;
+    margin-top: 16px;
+    flex-wrap: wrap;
+}
+.table-wrap {
+    overflow-x: auto;
+}
+table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+}
+th {
+    text-align: left;
+    padding: 10px 14px;
+    color: #64748b;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: .5px;
+    border-bottom: 1px solid #1a2a3a;
+}
+td {
+    padding: 12px 14px;
+    border-bottom: 1px solid #0d1829;
+    vertical-align: middle;
+}
+tr:hover td {
+    background: #0d1829;
+}
+.badge {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 600;
+}
+.badge-cyan {
+    background: #083344;
+    color: #22d3ee;
+}
+.badge-green {
+    background: #052e16;
+    color: #4ade80;
+}
+input, textarea, select {
+    background: #0d1829;
+    border: 1px solid #1e3a4a;
+    color: #e6f1ff;
+    border-radius: 8px;
+    padding: 10px 14px;
+    font-size: 14px;
+    width: 100%;
+    outline: none;
+    transition: border .2s;
+    font-family: inherit;
+}
+input:focus, textarea:focus, select:focus {
+    border-color: #22d3ee;
+}

@@ -1,32 +1,55 @@
 import { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
 
 export default function AdminPortal() {
     const [isLoggedIn, setIsLoggedIn] = useState(false);
     const [token, setToken] = useState("");
-    const [activeTab, setActiveTab] = useState("products"); // 'products' or 'contacts'
-    const [authMode, setAuthMode] = useState("login"); // 'login' or 'register'
+    const [activeTab, setActiveTab] = useState("dashboard"); // dashboard, messages, portfolio, services, products, team, stories
+    const [authMode, setAuthMode] = useState("login"); // login, register
 
-    // Auth Form State
+    // Auth Forms
     const [authForm, setAuthForm] = useState({ name: "", email: "", password: "" });
     const [authError, setAuthError] = useState("");
     const [authSuccess, setAuthSuccess] = useState("");
 
-    // Products Data & Form State
-    const [products, setProducts] = useState([]);
-    const [productForm, setProductForm] = useState({
-        title: "",
-        category: "",
-        description: "",
-        technologies: "",
-        features: "",
-        featured: false,
-    });
-    const [productMsg, setProductMsg] = useState("");
+    // Alerts
+    const [alert, setAlert] = useState({ msg: "", type: "" }); // success, error
 
-    // Contacts Data State
-    const [contacts, setContacts] = useState([]);
-    const [contactMsg, setContactMsg] = useState("");
+    // Dashboard Counts
+    const [counts, setCounts] = useState({
+        portfolio: 0,
+        services: 0,
+        products: 0,
+        team: 0,
+        messages: 0,
+        stories: 0
+    });
+
+    // Content Lists
+    const [messages, setMessages] = useState([]);
+    const [portfolio, setPortfolio] = useState([]);
+    const [services, setServices] = useState([]);
+    const [products, setProducts] = useState([]);
+    const [team, setTeam] = useState([]);
+    const [stories, setStories] = useState([]);
+
+    // Edit Item IDs
+    const [editId, setEditId] = useState("");
+
+    // Form States
+    const [portfolioForm, setPortfolioForm] = useState({ title: "", category: "", description: "", technologies: "", clientName: "" });
+    const [serviceForm, setServiceForm] = useState({ title: "", category: "", description: "", featured: "false" });
+    const [productForm, setProductForm] = useState({ title: "", price: "", category: "", description: "", technologies: "", features: "", featured: "false" });
+    const [teamForm, setTeamForm] = useState({ name: "", role: "", department: "", featured: "false" });
+    const [storyForm, setStoryForm] = useState({ title: "", description: "", order: "1" });
+
+    // File Uploads
+    const [uploadedFile, setUploadedFile] = useState(null);
+
+    // Alert helper
+    const triggerAlert = (msg, type = "success") => {
+        setAlert({ msg, type });
+        setTimeout(() => setAlert({ msg: "", type: "" }), 3500);
+    };
 
     // Check localStorage on mount
     useEffect(() => {
@@ -34,44 +57,88 @@ export default function AdminPortal() {
         if (storedToken) {
             setToken(storedToken);
             setIsLoggedIn(true);
-            fetchDashboardData(storedToken);
+            loadDashboardCounts(storedToken);
+            loadTabData(activeTab, storedToken);
         }
-    }, [activeTab]);
+    }, [activeTab, isLoggedIn]);
 
-    const fetchDashboardData = (authToken) => {
-        const headers = {
-            "Authorization": `Bearer ${authToken}`,
-            "Content-Type": "application/json",
+    const loadDashboardCounts = async (authToken) => {
+        const fetchCount = async (endpoint) => {
+            try {
+                const res = await fetch(`http://localhost:5000/api/${endpoint}`);
+                const data = await res.json();
+                return Array.isArray(data) ? data.length : 0;
+            } catch {
+                return 0;
+            }
         };
+        const pCount = await fetchCount("portfolio");
+        const sCount = await fetchCount("services");
+        const prCount = await fetchCount("products");
+        const tCount = await fetchCount("team");
+        const stCount = await fetchCount("stories");
 
-        if (activeTab === "products") {
-            fetch("http://localhost:5000/api/products")
-                .then(res => res.json())
-                .then(data => {
-                    if (Array.isArray(data)) setProducts(data);
-                })
-                .catch(err => console.error("Error fetching products:", err));
-        } else if (activeTab === "contacts") {
-            fetch("http://localhost:5000/api/contact", { headers })
-                .then(res => {
-                    if (!res.ok) throw new Error("Failed to fetch contacts");
-                    return res.json();
-                })
-                .then(data => {
-                    if (Array.isArray(data)) setContacts(data);
-                })
-                .catch(err => console.error("Error fetching contacts:", err));
+        let mCount = 0;
+        try {
+            const res = await fetch("http://localhost:5000/api/contact", {
+                headers: { "Authorization": `Bearer ${authToken}` }
+            });
+            const data = await res.json();
+            mCount = Array.isArray(data) ? data.length : 0;
+        } catch {}
+
+        setCounts({
+            portfolio: pCount,
+            services: sCount,
+            products: prCount,
+            team: tCount,
+            stories: stCount,
+            messages: mCount
+        });
+    };
+
+    const loadTabData = async (tab, authToken) => {
+        if (!authToken) return;
+        const headers = { "Authorization": `Bearer ${authToken}` };
+
+        try {
+            if (tab === "messages") {
+                const res = await fetch("http://localhost:5000/api/contact", { headers });
+                const data = await res.json();
+                if (Array.isArray(data)) setMessages(data);
+            } else if (tab === "portfolio") {
+                const res = await fetch("http://localhost:5000/api/portfolio");
+                const data = await res.json();
+                if (Array.isArray(data)) setPortfolio(data);
+            } else if (tab === "services") {
+                const res = await fetch("http://localhost:5000/api/services");
+                const data = await res.json();
+                if (Array.isArray(data)) setServices(data);
+            } else if (tab === "products") {
+                const res = await fetch("http://localhost:5000/api/products");
+                const data = await res.json();
+                if (Array.isArray(data)) setProducts(data);
+            } else if (tab === "team") {
+                const res = await fetch("http://localhost:5000/api/team");
+                const data = await res.json();
+                if (Array.isArray(data)) setTeam(data);
+            } else if (tab === "stories") {
+                const res = await fetch("http://localhost:5000/api/stories");
+                const data = await res.json();
+                if (Array.isArray(data)) setStories(data);
+            }
+        } catch (err) {
+            console.error("Error loading tab data:", err);
         }
     };
 
-    // Auth Actions
     const handleAuthSubmit = async (e) => {
         e.preventDefault();
         setAuthError("");
         setAuthSuccess("");
 
         const endpoint = authMode === "login" ? "login" : "register";
-        const body = authMode === "login" 
+        const body = authMode === "login"
             ? { email: authForm.email, password: authForm.password }
             : authForm;
 
@@ -83,18 +150,16 @@ export default function AdminPortal() {
             });
             const data = await res.json();
 
-            if (!res.ok) {
-                throw new Error(data.message || "Authentication failed");
-            }
+            if (!res.ok) throw new Error(data.message || "Authentication failed");
 
             if (authMode === "login") {
                 localStorage.setItem("adminToken", data.token);
                 setToken(data.token);
                 setIsLoggedIn(true);
                 setAuthSuccess("Login successful!");
-                fetchDashboardData(data.token);
+                setActiveTab("dashboard");
             } else {
-                setAuthSuccess("Registration successful! You can now log in.");
+                setAuthSuccess("Admin registered! You can now sign in.");
                 setAuthMode("login");
                 setAuthForm({ name: "", email: "", password: "" });
             }
@@ -107,89 +172,335 @@ export default function AdminPortal() {
         localStorage.removeItem("adminToken");
         setToken("");
         setIsLoggedIn(false);
+        setActiveTab("dashboard");
     };
 
-    // Product Actions
-    const handleCreateProduct = async (e) => {
+    // Generic API call helper (POST/PUT/DELETE)
+    const handleApiRequest = async (url, method, formData) => {
+        const headers = { "Authorization": `Bearer ${token}` };
+        
+        // Let browser set multipart boundary if body is FormData
+        const options = {
+            method,
+            headers,
+            body: formData
+        };
+
+        const res = await fetch(url, options);
+        if (!res.ok) {
+            const data = await res.json();
+            throw new Error(data.message || "API request failed");
+        }
+        return res.json();
+    };
+
+    // Helper for rendering image sources
+    const getImgUrl = (path) => {
+        if (!path) return "";
+        if (path.startsWith("http")) return path;
+        return `http://localhost:5000${path}`;
+    };
+
+    // ── PORTFOLIO ACTIONS ──
+    const savePortfolio = async (e) => {
         e.preventDefault();
-        setProductMsg("");
+        if (!portfolioForm.title || !portfolioForm.description) {
+            return triggerAlert("Title and description required", "error");
+        }
+
+        const form = new FormData();
+        form.append("title", portfolioForm.title);
+        form.append("category", portfolioForm.category);
+        form.append("description", portfolioForm.description);
+        form.append("technologies", portfolioForm.technologies);
+        if (portfolioForm.clientName) form.append("clientName", portfolioForm.clientName);
+        if (uploadedFile) form.append("image", uploadedFile);
+
+        const url = editId ? `http://localhost:5000/api/portfolio/${editId}` : "http://localhost:5000/api/portfolio";
+        const method = editId ? "PUT" : "POST";
 
         try {
-            const res = await fetch("http://localhost:5000/api/products", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify(productForm),
-            });
-            const data = await res.json();
-
-            if (!res.ok) throw new Error(data.message || "Failed to create product");
-
-            setProductMsg("Product created successfully!");
-            setProductForm({
-                title: "",
-                category: "",
-                description: "",
-                technologies: "",
-                features: "",
-                featured: false,
-            });
-            fetchDashboardData(token);
+            await handleApiRequest(url, method, form);
+            triggerAlert(editId ? "Project updated!" : "Project added!");
+            clearPortfolioForm();
+            loadTabData("portfolio", token);
         } catch (err) {
-            setProductMsg(`Error: ${err.message}`);
+            triggerAlert(err.message, "error");
         }
     };
 
-    const handleDeleteProduct = async (id) => {
-        if (!window.confirm("Are you sure you want to delete this product?")) return;
-        setProductMsg("");
+    const editPortfolio = (p) => {
+        setEditId(p._id);
+        setPortfolioForm({
+            title: p.title || "",
+            category: p.category || "",
+            description: p.description || "",
+            technologies: (p.technologies || []).join(", "),
+            clientName: p.clientName || ""
+        });
+        window.scrollTo(0, 0);
+    };
 
+    const deletePortfolio = async (id) => {
+        if (!window.confirm("Delete this project?")) return;
         try {
-            const res = await fetch(`http://localhost:5000/api/products/${id}`, {
-                method: "DELETE",
-                headers: {
-                    "Authorization": `Bearer ${token}`,
-                },
-            });
-            const data = await res.json();
-
-            if (!res.ok) throw new Error(data.message || "Failed to delete product");
-
-            setProductMsg("Product deleted successfully!");
-            fetchDashboardData(token);
+            await handleApiRequest(`http://localhost:5000/api/portfolio/${id}`, "DELETE");
+            triggerAlert("Project deleted!");
+            loadTabData("portfolio", token);
         } catch (err) {
-            setProductMsg(`Error: ${err.message}`);
+            triggerAlert(err.message, "error");
         }
     };
 
-    // Contact Actions
-    const handleDeleteContact = async (id) => {
-        if (!window.confirm("Are you sure you want to delete this message?")) return;
-        setContactMsg("");
+    const clearPortfolioForm = () => {
+        setEditId("");
+        setPortfolioForm({ title: "", category: "", description: "", technologies: "", clientName: "" });
+        setUploadedFile(null);
+    };
+
+    // ── SERVICES ACTIONS ──
+    const saveService = async (e) => {
+        e.preventDefault();
+        if (!serviceForm.title || !serviceForm.description) {
+            return triggerAlert("Title and description required", "error");
+        }
+
+        const form = new FormData();
+        form.append("title", serviceForm.title);
+        form.append("description", serviceForm.description);
+        form.append("category", serviceForm.category);
+        form.append("featured", serviceForm.featured);
+        if (uploadedFile) form.append("image", uploadedFile);
+
+        const url = editId ? `http://localhost:5000/api/services/${editId}` : "http://localhost:5000/api/services";
+        const method = editId ? "PUT" : "POST";
 
         try {
-            const res = await fetch(`http://localhost:5000/api/contact/${id}`, {
-                method: "DELETE",
-                headers: {
-                    "Authorization": `Bearer ${token}`,
-                },
-            });
-            const data = await res.json();
-
-            if (!res.ok) throw new Error(data.message || "Failed to delete contact message");
-
-            setContactMsg("Message deleted successfully!");
-            fetchDashboardData(token);
+            await handleApiRequest(url, method, form);
+            triggerAlert(editId ? "Service updated!" : "Service added!");
+            clearServiceForm();
+            loadTabData("services", token);
         } catch (err) {
-            setContactMsg(`Error: ${err.message}`);
+            triggerAlert(err.message, "error");
         }
     };
+
+    const editService = (s) => {
+        setEditId(s._id);
+        setServiceForm({
+            title: s.title || "",
+            category: s.category || "",
+            description: s.description || "",
+            featured: s.featured ? "true" : "false"
+        });
+        window.scrollTo(0, 0);
+    };
+
+    const deleteService = async (id) => {
+        if (!window.confirm("Delete this service?")) return;
+        try {
+            await handleApiRequest(`http://localhost:5000/api/services/${id}`, "DELETE");
+            triggerAlert("Service deleted!");
+            loadTabData("services", token);
+        } catch (err) {
+            triggerAlert(err.message, "error");
+        }
+    };
+
+    const clearServiceForm = () => {
+        setEditId("");
+        setServiceForm({ title: "", category: "", description: "", featured: "false" });
+        setUploadedFile(null);
+    };
+
+    // ── PRODUCTS ACTIONS ──
+    const saveProduct = async (e) => {
+        e.preventDefault();
+        if (!productForm.title || !productForm.description || !productForm.price) {
+            return triggerAlert("Title, description and price required", "error");
+        }
+
+        const form = new FormData();
+        form.append("title", productForm.title);
+        form.append("price", productForm.price);
+        form.append("category", productForm.category);
+        form.append("description", productForm.description);
+        form.append("featured", productForm.featured);
+        form.append("technologies", productForm.technologies);
+        form.append("features", productForm.features);
+        if (uploadedFile) form.append("image", uploadedFile);
+
+        const url = editId ? `http://localhost:5000/api/products/${editId}` : "http://localhost:5000/api/products";
+        const method = editId ? "PUT" : "POST";
+
+        try {
+            await handleApiRequest(url, method, form);
+            triggerAlert(editId ? "Product updated!" : "Product added!");
+            clearProductForm();
+            loadTabData("products", token);
+        } catch (err) {
+            triggerAlert(err.message, "error");
+        }
+    };
+
+    const editProduct = (p) => {
+        setEditId(p._id);
+        setProductForm({
+            title: p.title || "",
+            price: p.price || "",
+            category: p.category || "",
+            description: p.description || "",
+            technologies: (p.technologies || []).join(", "),
+            features: (p.features || []).join(", "),
+            featured: p.featured ? "true" : "false"
+        });
+        window.scrollTo(0, 0);
+    };
+
+    const deleteProduct = async (id) => {
+        if (!window.confirm("Delete this product?")) return;
+        try {
+            await handleApiRequest(`http://localhost:5000/api/products/${id}`, "DELETE");
+            triggerAlert("Product deleted!");
+            loadTabData("products", token);
+        } catch (err) {
+            triggerAlert(err.message, "error");
+        }
+    };
+
+    const clearProductForm = () => {
+        setEditId("");
+        setProductForm({ title: "", price: "", category: "", description: "", technologies: "", features: "", featured: "false" });
+        setUploadedFile(null);
+    };
+
+    // ── TEAM ACTIONS ──
+    const saveTeamMember = async (e) => {
+        e.preventDefault();
+        if (!teamForm.name || !teamForm.role || !teamForm.department) {
+            return triggerAlert("Name, role and department required", "error");
+        }
+        if (!editId && !uploadedFile) {
+            return triggerAlert("Please upload a member photo", "error");
+        }
+
+        const form = new FormData();
+        form.append("name", teamForm.name);
+        form.append("role", teamForm.role);
+        form.append("department", teamForm.department);
+        form.append("featured", teamForm.featured);
+        if (uploadedFile) form.append("image", uploadedFile);
+
+        const url = editId ? `http://localhost:5000/api/team/${editId}` : "http://localhost:5000/api/team";
+        const method = editId ? "PUT" : "POST";
+
+        try {
+            await handleApiRequest(url, method, form);
+            triggerAlert(editId ? "Team member updated!" : "Team member added!");
+            clearTeamForm();
+            loadTabData("team", token);
+        } catch (err) {
+            triggerAlert(err.message, "error");
+        }
+    };
+
+    const editTeamMember = (m) => {
+        setEditId(m._id);
+        setTeamForm({
+            name: m.name || "",
+            role: m.role || "",
+            department: m.department || "",
+            featured: m.featured ? "true" : "false"
+        });
+        window.scrollTo(0, 0);
+    };
+
+    const deleteTeamMember = async (id) => {
+        if (!window.confirm("Delete this team member?")) return;
+        try {
+            await handleApiRequest(`http://localhost:5000/api/team/${id}`, "DELETE");
+            triggerAlert("Team member deleted!");
+            loadTabData("team", token);
+        } catch (err) {
+            triggerAlert(err.message, "error");
+        }
+    };
+
+    const clearTeamForm = () => {
+        setEditId("");
+        setTeamForm({ name: "", role: "", department: "", featured: "false" });
+        setUploadedFile(null);
+    };
+
+    // ── STORIES ACTIONS ──
+    const saveStory = async (e) => {
+        e.preventDefault();
+        if (!storyForm.title || !storyForm.description) {
+            return triggerAlert("Title and description required", "error");
+        }
+
+        const form = new FormData();
+        form.append("title", storyForm.title);
+        form.append("description", storyForm.description);
+        form.append("order", storyForm.order);
+        if (uploadedFile) form.append("image", uploadedFile);
+
+        const url = editId ? `http://localhost:5000/api/stories/${editId}` : "http://localhost:5000/api/stories";
+        const method = editId ? "PUT" : "POST";
+
+        try {
+            await handleApiRequest(url, method, form);
+            triggerAlert(editId ? "Story section updated!" : "Story section added!");
+            clearStoryForm();
+            loadTabData("stories", token);
+        } catch (err) {
+            triggerAlert(err.message, "error");
+        }
+    };
+
+    const editStory = (s) => {
+        setEditId(s._id);
+        setStoryForm({
+            title: s.title || "",
+            description: s.description || "",
+            order: s.order || "1"
+        });
+        window.scrollTo(0, 0);
+    };
+
+    const deleteStory = async (id) => {
+        if (!window.confirm("Delete this story section?")) return;
+        try {
+            await handleApiRequest(`http://localhost:5000/api/stories/${id}`, "DELETE");
+            triggerAlert("Story section deleted!");
+            loadTabData("stories", token);
+        } catch (err) {
+            triggerAlert(err.message, "error");
+        }
+    };
+
+    const clearStoryForm = () => {
+        setEditId("");
+        setStoryForm({ title: "", description: "", order: "1" });
+        setUploadedFile(null);
+    };
+
+    // ── MESSAGES ACTIONS ──
+    const deleteMessage = async (id) => {
+        if (!window.confirm("Delete this message?")) return;
+        try {
+            await handleApiRequest(`http://localhost:5000/api/contact/${id}`, "DELETE");
+            triggerAlert("Message deleted!");
+            loadTabData("messages", token);
+        } catch (err) {
+            triggerAlert(err.message, "error");
+        }
+    };
+
 
     if (!isLoggedIn) {
         return (
             <div className="min-h-screen bg-black text-white flex items-center justify-center px-4 py-28 relative overflow-hidden">
-                {/* Background Decor */}
                 <div className="absolute top-[-200px] left-[-200px] w-[700px] h-[700px] bg-cyan-400/20 blur-[180px] rounded-full"></div>
                 <div className="absolute bottom-[-200px] right-[-200px] w-[700px] h-[700px] bg-amber-500/10 blur-[150px] rounded-full"></div>
 
@@ -206,7 +517,7 @@ export default function AdminPortal() {
                     <form onSubmit={handleAuthSubmit} className="space-y-5">
                         {authMode === "register" && (
                             <div>
-                                <label className="block text-sm font-medium text-gray-300 mb-1">Full Name</label>
+                                <label className="block text-xs font-semibold text-gray-400 mb-1 uppercase tracking-wider">Full Name</label>
                                 <input
                                     type="text"
                                     required
@@ -219,7 +530,7 @@ export default function AdminPortal() {
                         )}
 
                         <div>
-                            <label className="block text-sm font-medium text-gray-300 mb-1">Email Address</label>
+                            <label className="block text-xs font-semibold text-gray-400 mb-1 uppercase tracking-wider">Email Address</label>
                             <input
                                 type="email"
                                 required
@@ -231,7 +542,7 @@ export default function AdminPortal() {
                         </div>
 
                         <div>
-                            <label className="block text-sm font-medium text-gray-300 mb-1">Password</label>
+                            <label className="block text-xs font-semibold text-gray-400 mb-1 uppercase tracking-wider">Password</label>
                             <input
                                 type="password"
                                 required
@@ -266,14 +577,14 @@ export default function AdminPortal() {
                         {authMode === "login" ? (
                             <p>
                                 Need an account?{" "}
-                                <button onClick={() => { setAuthMode("register"); setAuthError(""); }} className="text-amber-400 font-semibold hover:underline">
+                                <button onClick={() => { setAuthMode("register"); setAuthError(""); }} className="text-amber-400 font-semibold hover:underline bg-transparent border-none cursor-pointer">
                                     Register here
                                 </button>
                             </p>
                         ) : (
                             <p>
                                 Already have an account?{" "}
-                                <button onClick={() => { setAuthMode("login"); setAuthError(""); }} className="text-amber-400 font-semibold hover:underline">
+                                <button onClick={() => { setAuthMode("login"); setAuthError(""); }} className="text-amber-400 font-semibold hover:underline bg-transparent border-none cursor-pointer">
                                     Sign in here
                                 </button>
                             </p>
@@ -285,233 +596,599 @@ export default function AdminPortal() {
     }
 
     return (
-        <div className="min-h-screen bg-black text-white px-4 sm:px-6 lg:px-12 pt-28 py-16 relative overflow-hidden">
-            {/* Background Decor */}
-            <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-amber-500/10 blur-[150px] rounded-full pointer-events-none"></div>
+        <div className="min-h-screen bg-[#0a0f1c] text-[#e6f1ff] flex relative">
+            {/* Global Alert Notification */}
+            {alert.msg && (
+                <div className={`fixed top-6 right-6 z-50 px-6 py-3 rounded-xl border text-sm font-semibold shadow-2xl transition duration-300 ${
+                    alert.type === "error" 
+                        ? "bg-red-950/80 border-red-500/30 text-red-400" 
+                        : "bg-green-950/80 border-green-500/30 text-green-400"
+                }`}>
+                    {alert.msg}
+                </div>
+            )}
 
-            <div className="max-w-7xl mx-auto relative z-10">
-                {/* Header */}
-                <div className="flex flex-col md:flex-row md:items-center md:justify-between border-b border-white/10 pb-6 mb-8 gap-4">
-                    <div>
-                        <h1 className="text-3xl sm:text-5xl font-black text-white leading-tight">
-                            Control <span className="bg-gradient-to-r from-amber-400 to-yellow-500 bg-clip-text text-transparent">Panel</span>
-                        </h1>
-                        <p className="text-gray-400 text-sm sm:text-base mt-2">
-                            Manage your dynamic website content and client interactions.
-                        </p>
-                    </div>
-                    <div className="flex items-center gap-4">
-                        <span className="text-xs bg-white/5 border border-white/10 px-4 py-2 rounded-xl text-gray-300">
-                            Connected (In-Memory Sandbox)
-                        </span>
+            {/* ── SIDEBAR ── */}
+            <aside className="w-64 bg-[#050a14] border-right border-[#1a2a3a] flex flex-col fixed top-0 left-0 bottom-0 z-40">
+                <div className="p-6 border-b border-[#1a2a3a]">
+                    <h2 className="text-lg font-bold text-cyan-400 tracking-wider">Embed AIoT</h2>
+                    <p className="text-[11px] text-gray-500 mt-1 uppercase font-semibold">Admin Panel</p>
+                </div>
+                <nav className="flex-1 py-4 space-y-1">
+                    {[
+                        { id: "dashboard", label: "Dashboard", icon: "📊" },
+                        { id: "messages", label: "Messages", icon: "✉️" },
+                        { id: "portfolio", label: "Portfolio", icon: "📁" },
+                        { id: "services", label: "Services", icon: "⚙️" },
+                        { id: "products", label: "Products", icon: "📦" },
+                        { id: "team", label: "Team", icon: "👥" },
+                        { id: "stories", label: "Our Story", icon: "📖" }
+                    ].map(tab => (
                         <button
-                            onClick={handleLogout}
-                            className="px-4 py-2 bg-red-600/20 border border-red-500/30 text-red-400 text-sm font-semibold rounded-xl hover:bg-red-600 hover:text-white transition duration-300"
+                            key={tab.id}
+                            onClick={() => { setActiveTab(tab.id); setEditId(""); }}
+                            className={`w-full flex items-center gap-3 px-6 py-3 text-sm font-medium transition text-left border-l-4 ${
+                                activeTab === tab.id
+                                    ? "text-cyan-400 bg-[#0d1829] border-cyan-400"
+                                    : "text-gray-400 border-transparent hover:text-cyan-400 hover:bg-[#0d1829]"
+                            }`}
                         >
-                            Sign Out
+                            <span>{tab.icon}</span>
+                            <span>{tab.label}</span>
                         </button>
-                    </div>
-                </div>
-
-                {/* Tab Navigation */}
-                <div className="flex gap-4 border-b border-white/10 pb-4 mb-8">
+                    ))}
+                </nav>
+                <div className="p-4 border-t border-[#1a2a3a]">
                     <button
-                        onClick={() => setActiveTab("products")}
-                        className={`px-5 py-2.5 rounded-xl text-sm font-bold transition ${
-                            activeTab === "products"
-                                ? "bg-amber-400 text-black shadow-[0_0_15px_rgba(251,191,36,0.3)]"
-                                : "bg-white/5 text-gray-300 hover:bg-white/10"
-                        }`}
+                        onClick={handleLogout}
+                        className="w-full py-2.5 bg-slate-800 border border-slate-700 text-gray-400 font-bold text-sm rounded-lg hover:bg-red-600 hover:text-white hover:border-red-600 transition"
                     >
-                        Product Manager
-                    </button>
-                    <button
-                        onClick={() => setActiveTab("contacts")}
-                        className={`px-5 py-2.5 rounded-xl text-sm font-bold transition ${
-                            activeTab === "contacts"
-                                ? "bg-amber-400 text-black shadow-[0_0_15px_rgba(251,191,36,0.3)]"
-                                : "bg-white/5 text-gray-300 hover:bg-white/10"
-                        }`}
-                    >
-                        Inbox Messages
+                        🚪 Sign Out
                     </button>
                 </div>
+            </aside>
 
-                {/* Tab: Products */}
-                {activeTab === "products" && (
-                    <div className="grid lg:grid-cols-3 gap-8">
-                        {/* Create Product Form */}
-                        <div className="bg-white/5 border border-white/10 rounded-3xl p-6 h-fit backdrop-blur-xl">
-                            <h2 className="text-xl font-bold text-amber-300 mb-5">Create New Product</h2>
-                            <form onSubmit={handleCreateProduct} className="space-y-4">
-                                <div>
-                                    <label className="block text-xs font-semibold text-gray-400 mb-1">Product Title</label>
-                                    <input
-                                        type="text"
-                                        required
-                                        className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-amber-400"
-                                        placeholder="e.g. Smart EV Charger"
-                                        value={productForm.title}
-                                        onChange={e => setProductForm({ ...productForm, title: e.target.value })}
-                                    />
-                                </div>
-                                <div>
-                                    <label className="block text-xs font-semibold text-gray-400 mb-1">Category</label>
-                                    <input
-                                        type="text"
-                                        required
-                                        className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-amber-400"
-                                        placeholder="e.g. EV Solutions"
-                                        value={productForm.category}
-                                        onChange={e => setProductForm({ ...productForm, category: e.target.value })}
-                                    />
-                                </div>
-                                <div>
-                                    <label className="block text-xs font-semibold text-gray-400 mb-1">Description</label>
-                                    <textarea
-                                        required
-                                        rows={3}
-                                        className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-amber-400"
-                                        placeholder="Brief details about the product..."
-                                        value={productForm.description}
-                                        onChange={e => setProductForm({ ...productForm, description: e.target.value })}
-                                    />
-                                </div>
-                                <div>
-                                    <label className="block text-xs font-semibold text-gray-400 mb-1">Technologies (comma separated)</label>
-                                    <input
-                                        type="text"
-                                        className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-amber-400"
-                                        placeholder="e.g. IoT, LoRa, Arduino"
-                                        value={productForm.technologies}
-                                        onChange={e => setProductForm({ ...productForm, technologies: e.target.value })}
-                                    />
-                                </div>
-                                <div>
-                                    <label className="block text-xs font-semibold text-gray-400 mb-1">Features (comma separated)</label>
-                                    <input
-                                        type="text"
-                                        className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-amber-400"
-                                        placeholder="e.g. Solar powered, 10km range"
-                                        value={productForm.features}
-                                        onChange={e => setProductForm({ ...productForm, features: e.target.value })}
-                                    />
-                                </div>
+            {/* ── MAIN CONTENT ── */}
+            <main className="ml-64 flex-1 p-8 min-h-screen">
 
-                                {productMsg && (
-                                    <div className="bg-white/5 border border-amber-400/20 text-amber-300 text-xs rounded-xl p-3">
-                                        {productMsg}
-                                    </div>
-                                )}
-
-                                <button
-                                    type="submit"
-                                    className="w-full py-2.5 bg-gradient-to-r from-amber-400 to-yellow-500 text-black font-bold text-sm rounded-xl hover:scale-[1.02] transition"
-                                >
-                                    Publish Product
-                                </button>
-                            </form>
+                {/* Dashboard Tab */}
+                {activeTab === "dashboard" && (
+                    <div>
+                        <div className="mb-8">
+                            <h1 className="text-3xl font-bold">Dashboard</h1>
+                            <p className="text-gray-500 text-sm mt-1">Welcome back! Here's an overview of your website content.</p>
                         </div>
 
-                        {/* Database Products List */}
-                        <div className="lg:col-span-2 space-y-4">
-                            <div className="flex items-center justify-between mb-2">
-                                <h2 className="text-xl font-bold text-white">Database Products</h2>
-                                <span className="text-xs text-gray-400 font-semibold">{products.length} Products Found</span>
-                            </div>
+                        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4 mb-8">
+                            {[
+                                { count: counts.portfolio, label: "Projects", color: "text-cyan-400", tab: "portfolio" },
+                                { count: counts.services, label: "Services", color: "text-cyan-400", tab: "services" },
+                                { count: counts.products, label: "Products", color: "text-cyan-400", tab: "products" },
+                                { count: counts.team, label: "Team Members", color: "text-cyan-400", tab: "team" },
+                                { count: counts.messages, label: "Messages", color: "text-cyan-400", tab: "messages" },
+                                { count: counts.stories, label: "Stories", color: "text-cyan-400", tab: "stories" }
+                            ].map((s, idx) => (
+                                <div key={idx} onClick={() => setActiveTab(s.tab)} className="bg-[#050a14] border border-[#1a2a3a] rounded-xl p-5 cursor-pointer hover:border-cyan-400/40 transition">
+                                    <div className={`text-3xl font-bold ${s.color}`}>{s.count}</div>
+                                    <div className="text-xs text-gray-500 mt-1 uppercase font-semibold tracking-wider">{s.label}</div>
+                                </div>
+                            ))}
+                        </div>
 
-                            {products.length === 0 ? (
-                                <div className="text-center py-16 border border-dashed border-white/10 rounded-3xl bg-white/5">
-                                    <p className="text-gray-400 text-sm">No products in the database yet.</p>
-                                    <p className="text-xs text-gray-500 mt-1">Use the form on the left to add your first product.</p>
-                                </div>
-                            ) : (
-                                <div className="grid sm:grid-cols-2 gap-4">
-                                    {products.map((p) => (
-                                        <div key={p._id} className="bg-white/5 border border-white/10 rounded-3xl p-5 flex flex-col justify-between hover:border-amber-400/30 transition">
-                                            <div>
-                                                <div className="flex justify-between items-start mb-3">
-                                                    <span className="px-2.5 py-1 rounded-full bg-cyan-400/10 text-cyan-300 text-xs border border-cyan-400/20">
-                                                        {p.category}
-                                                    </span>
-                                                    <button
-                                                        onClick={() => handleDeleteProduct(p._id)}
-                                                        className="text-red-400 hover:text-red-300 text-xs font-semibold"
-                                                    >
-                                                        Delete
-                                                    </button>
-                                                </div>
-                                                <h3 className="text-lg font-bold mb-2 text-white">{p.title}</h3>
-                                                <p className="text-gray-400 text-xs leading-relaxed mb-4">{p.description}</p>
-                                                
-                                                <div className="flex flex-wrap gap-1.5 mb-2">
-                                                    {p.technologies && p.technologies.map((t, idx) => (
-                                                        <span key={idx} className="px-2 py-0.5 rounded-lg bg-white/5 border border-white/10 text-[10px] text-gray-300">
-                                                            {t}
-                                                        </span>
-                                                    ))}
-                                                </div>
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
-                            )}
+                        <div className="bg-[#050a14] border border-[#1a2a3a] rounded-2xl p-6">
+                            <h2 className="text-lg font-bold border-b border-[#1a2a3a] pb-3 mb-4">Quick Actions</h2>
+                            <div className="flex flex-wrap gap-3">
+                                <button onClick={() => setActiveTab("portfolio")} className="px-5 py-2.5 bg-cyan-400 text-black font-semibold rounded-lg hover:bg-cyan-500 transition">+ Add Project</button>
+                                <button onClick={() => setActiveTab("services")} className="px-5 py-2.5 bg-slate-800 border border-slate-700 text-gray-300 font-semibold rounded-lg hover:bg-slate-700 transition">+ Add Service</button>
+                                <button onClick={() => setActiveTab("products")} className="px-5 py-2.5 bg-slate-800 border border-slate-700 text-gray-300 font-semibold rounded-lg hover:bg-slate-700 transition">+ Add Product</button>
+                                <button onClick={() => setActiveTab("team")} className="px-5 py-2.5 bg-slate-800 border border-slate-700 text-gray-300 font-semibold rounded-lg hover:bg-slate-700 transition">+ Add Team Member</button>
+                            </div>
                         </div>
                     </div>
                 )}
 
-                {/* Tab: Contacts */}
-                {activeTab === "contacts" && (
+                {/* Messages Tab */}
+                {activeTab === "messages" && (
                     <div>
-                        <div className="flex items-center justify-between mb-5">
-                            <h2 className="text-xl font-bold text-white">Inbox Messages</h2>
-                            <span className="text-xs text-gray-400 font-semibold">{contacts.length} Messages</span>
+                        <div className="mb-8">
+                            <h1 className="text-3xl font-bold">Contact Messages</h1>
+                            <p className="text-gray-500 text-sm mt-1">Messages sent through your website contact form.</p>
                         </div>
 
-                        {contactMsg && (
-                            <div className="mb-4 bg-white/5 border border-amber-400/20 text-amber-300 text-sm rounded-xl p-3">
-                                {contactMsg}
-                            </div>
-                        )}
-
-                        {contacts.length === 0 ? (
-                            <div className="text-center py-20 border border-dashed border-white/10 rounded-3xl bg-white/5">
-                                <p className="text-gray-400 text-sm">No messages received yet.</p>
-                                <p className="text-xs text-gray-500 mt-1">Submit the contact form in the footer to test the flow.</p>
+                        {messages.length === 0 ? (
+                            <div className="text-center py-20 border border-dashed border-[#1a2a3a] rounded-2xl bg-[#050a14]">
+                                <div className="text-4xl mb-2">✉️</div>
+                                <p className="text-gray-500 text-sm">No messages yet.</p>
                             </div>
                         ) : (
                             <div className="space-y-4">
-                                {contacts.map((c) => (
-                                    <div key={c._id} className="bg-white/5 border border-white/10 rounded-3xl p-6 hover:border-amber-400/30 transition">
-                                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between border-b border-white/5 pb-4 mb-4 gap-2">
+                                {messages.map(m => (
+                                    <div key={m._id} className="bg-[#0d1829] border border-[#1a2a3a] rounded-xl p-5">
+                                        <div className="flex justify-between items-start mb-3">
                                             <div>
-                                                <h3 className="text-lg font-bold text-amber-300">{c.subject}</h3>
-                                                <p className="text-sm text-gray-300 mt-1">
-                                                    From: <span className="font-semibold text-white">{c.name}</span> ({c.email})
-                                                </p>
+                                                <div className="font-bold text-white text-base">{m.name}</div>
+                                                <div className="text-xs text-cyan-400 mt-0.5">{m.email}</div>
+                                                <div className="text-xs text-amber-400 font-semibold mt-1">Subject: {m.subject}</div>
                                             </div>
-                                            <div className="flex items-center gap-4">
-                                                <span className="text-xs text-gray-400">
-                                                    {c.createdAt ? new Date(c.createdAt).toLocaleString() : new Date().toLocaleString()}
-                                                </span>
-                                                <button
-                                                    onClick={() => handleDeleteContact(c._id)}
-                                                    className="px-3 py-1 bg-red-600/10 border border-red-500/20 text-red-400 text-xs font-semibold rounded-lg hover:bg-red-600 hover:text-white transition"
-                                                >
-                                                    Delete
-                                                </button>
+                                            <div className="flex items-center gap-3">
+                                                <span className="text-xs text-gray-500">{new Date(m.date).toLocaleDateString()}</span>
+                                                <button onClick={() => deleteMessage(m._id)} className="px-3 py-1 bg-red-600/10 border border-red-500/20 text-red-400 text-xs rounded hover:bg-red-600 hover:text-white transition">Delete</button>
                                             </div>
                                         </div>
-                                        <p className="text-gray-300 text-sm leading-relaxed whitespace-pre-wrap">
-                                            {c.message}
-                                        </p>
+                                        <div className="text-gray-400 text-sm leading-relaxed whitespace-pre-wrap">{m.message}</div>
                                     </div>
                                 ))}
                             </div>
                         )}
                     </div>
                 )}
-            </div>
+
+                {/* Portfolio Tab */}
+                {activeTab === "portfolio" && (
+                    <div>
+                        <div className="mb-8">
+                            <h1 className="text-3xl font-bold">Portfolio Showcase</h1>
+                            <p className="text-gray-500 text-sm mt-1">Manage project showreel.</p>
+                        </div>
+
+                        {/* Portfolio Form */}
+                        <div className="bg-[#050a14] border border-[#1a2a3a] rounded-2xl p-6 mb-8">
+                            <h2 className="text-lg font-bold border-b border-[#1a2a3a] pb-3 mb-5">{editId ? "Edit Project" : "Add New Project"}</h2>
+                            <form onSubmit={savePortfolio} className="space-y-4">
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div className="flex flex-col gap-1.5">
+                                        <label className="text-[11px] text-gray-400 font-semibold uppercase">Project Title</label>
+                                        <input type="text" required placeholder="e.g. Smart Farming System" value={portfolioForm.title} onChange={e => setPortfolioForm({ ...portfolioForm, title: e.target.value })} />
+                                    </div>
+                                    <div className="flex flex-col gap-1.5">
+                                        <label className="text-[11px] text-gray-400 font-semibold uppercase">Category</label>
+                                        <select value={portfolioForm.category} onChange={e => setPortfolioForm({ ...portfolioForm, category: e.target.value })}>
+                                            <option value="">Select category</option>
+                                            <option value="Smart Agriculture">Smart Agriculture</option>
+                                            <option value="AI, IoT">AI, IoT</option>
+                                            <option value="Mechanical Design">Mechanical Design</option>
+                                            <option value="Consumer Electronics">Consumer Electronics</option>
+                                            <option value="IoT Development">IoT Development</option>
+                                            <option value="Security Systems">Security Systems</option>
+                                            <option value="Artificial Intelligence">Artificial Intelligence</option>
+                                            <option value="Embedded Systems">Embedded Systems</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div className="flex flex-col gap-1.5">
+                                    <label className="text-[11px] text-gray-400 font-semibold uppercase">Description</label>
+                                    <textarea required placeholder="Describe project details..." value={portfolioForm.description} onChange={e => setPortfolioForm({ ...portfolioForm, description: e.target.value })}></textarea>
+                                </div>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div className="flex flex-col gap-1.5">
+                                        <label className="text-[11px] text-gray-400 font-semibold uppercase">Technologies (comma separated)</label>
+                                        <input type="text" placeholder="React, Node.js, IoT" value={portfolioForm.technologies} onChange={e => setPortfolioForm({ ...portfolioForm, technologies: e.target.value })} />
+                                    </div>
+                                    <div className="flex flex-col gap-1.5">
+                                        <label className="text-[11px] text-gray-400 font-semibold uppercase">Client Name (optional)</label>
+                                        <input type="text" placeholder="e.g. ABC Corp" value={portfolioForm.clientName} onChange={e => setPortfolioForm({ ...portfolioForm, clientName: e.target.value })} />
+                                    </div>
+                                </div>
+                                <div className="flex flex-col gap-1.5">
+                                    <label className="text-[11px] text-gray-400 font-semibold uppercase">Project Image</label>
+                                    <input type="file" accept="image/*" onChange={e => setUploadedFile(e.target.files[0])} />
+                                </div>
+                                <div className="flex gap-2.5 pt-2">
+                                    <button type="submit" className="btn btn-primary">Save Project</button>
+                                    <button type="button" onClick={clearPortfolioForm} className="btn btn-secondary">Clear</button>
+                                </div>
+                            </form>
+                        </div>
+
+                        {/* Projects List */}
+                        <div className="bg-[#050a14] border border-[#1a2a3a] rounded-2xl p-6">
+                            <h2 className="text-lg font-bold border-b border-[#1a2a3a] pb-3 mb-5">All Projects</h2>
+                            <div className="table-wrap">
+                                <table>
+                                    <thead>
+                                        <tr>
+                                            <th>Image</th>
+                                            <th>Title</th>
+                                            <th>Category</th>
+                                            <th>Technologies</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {portfolio.length === 0 ? (
+                                            <tr>
+                                                <td colSpan="5" className="text-center py-8 text-gray-500">No projects yet.</td>
+                                            </tr>
+                                        ) : (
+                                            portfolio.map(p => (
+                                                <tr key={p._id}>
+                                                    <td>{p.image ? <img src={getImgUrl(p.image)} alt="project" className="w-12 h-12 object-cover rounded-lg" /> : "—"}</td>
+                                                    <td><strong>{p.title}</strong></td>
+                                                    <td><span className="badge badge-cyan">{p.category || "—"}</span></td>
+                                                    <td className="text-xs text-gray-400">{(p.technologies || []).join(", ")}</td>
+                                                    <td>
+                                                        <div className="flex gap-2">
+                                                            <button onClick={() => editPortfolio(p)} className="px-3 py-1.5 bg-slate-800 border border-slate-700 text-gray-300 text-xs rounded hover:text-white transition">Edit</button>
+                                                            <button onClick={() => deletePortfolio(p._id)} className="px-3 py-1.5 bg-red-600/10 border border-red-500/20 text-red-400 text-xs rounded hover:bg-red-600 hover:text-white transition">Delete</button>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            ))
+                                        )}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* Services Tab */}
+                {activeTab === "services" && (
+                    <div>
+                        <div className="mb-8">
+                            <h1 className="text-3xl font-bold">Services</h1>
+                            <p className="text-gray-500 text-sm mt-1">Manage what services your company offers.</p>
+                        </div>
+
+                        {/* Service Form */}
+                        <div className="bg-[#050a14] border border-[#1a2a3a] rounded-2xl p-6 mb-8">
+                            <h2 className="text-lg font-bold border-b border-[#1a2a3a] pb-3 mb-5">{editId ? "Edit Service" : "Add New Service"}</h2>
+                            <form onSubmit={saveService} className="space-y-4">
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div className="flex flex-col gap-1.5">
+                                        <label className="text-[11px] text-gray-400 font-semibold uppercase">Service Title</label>
+                                        <input type="text" required placeholder="e.g. Embedded Systems Development" value={serviceForm.title} onChange={e => setServiceForm({ ...serviceForm, title: e.target.value })} />
+                                    </div>
+                                    <div className="flex flex-col gap-1.5">
+                                        <label className="text-[11px] text-gray-400 font-semibold uppercase">Category</label>
+                                        <input type="text" placeholder="e.g. Hardware Engineering" value={serviceForm.category} onChange={e => setServiceForm({ ...serviceForm, category: e.target.value })} />
+                                    </div>
+                                </div>
+                                <div className="flex flex-col gap-1.5">
+                                    <label className="text-[11px] text-gray-400 font-semibold uppercase">Description</label>
+                                    <textarea required placeholder="Describe the service..." value={serviceForm.description} onChange={e => setServiceForm({ ...serviceForm, description: e.target.value })}></textarea>
+                                </div>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div className="flex flex-col gap-1.5">
+                                        <label className="text-[11px] text-gray-400 font-semibold uppercase">Featured</label>
+                                        <select value={serviceForm.featured} onChange={e => setServiceForm({ ...serviceForm, featured: e.target.value })}>
+                                            <option value="false">No</option>
+                                            <option value="true">Yes — show highlighted</option>
+                                        </select>
+                                    </div>
+                                    <div className="flex flex-col gap-1.5">
+                                        <label className="text-[11px] text-gray-400 font-semibold uppercase">Service Image</label>
+                                        <input type="file" accept="image/*" onChange={e => setUploadedFile(e.target.files[0])} />
+                                    </div>
+                                </div>
+                                <div className="flex gap-2.5 pt-2">
+                                    <button type="submit" className="btn btn-primary">Save Service</button>
+                                    <button type="button" onClick={clearServiceForm} className="btn btn-secondary">Clear</button>
+                                </div>
+                            </form>
+                        </div>
+
+                        {/* Services List */}
+                        <div className="bg-[#050a14] border border-[#1a2a3a] rounded-2xl p-6">
+                            <h2 className="text-lg font-bold border-b border-[#1a2a3a] pb-3 mb-5">All Services</h2>
+                            <div className="table-wrap">
+                                <table>
+                                    <thead>
+                                        <tr>
+                                            <th>Image</th>
+                                            <th>Title</th>
+                                            <th>Category</th>
+                                            <th>Featured</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {services.length === 0 ? (
+                                            <tr>
+                                                <td colSpan="5" className="text-center py-8 text-gray-500">No services yet.</td>
+                                            </tr>
+                                        ) : (
+                                            services.map(s => (
+                                                <tr key={s._id}>
+                                                    <td>{s.image ? <img src={getImgUrl(s.image)} alt="service" className="w-12 h-12 object-cover rounded-lg" /> : "—"}</td>
+                                                    <td><strong>{s.title}</strong></td>
+                                                    <td>{s.category || "—"}</td>
+                                                    <td>{s.featured ? <span className="badge badge-green">Yes</span> : <span className="text-gray-500">No</span>}</td>
+                                                    <td>
+                                                        <div className="flex gap-2">
+                                                            <button onClick={() => editService(s)} className="px-3 py-1.5 bg-slate-800 border border-slate-700 text-gray-300 text-xs rounded hover:text-white transition">Edit</button>
+                                                            <button onClick={() => deleteService(s._id)} className="px-3 py-1.5 bg-red-600/10 border border-red-500/20 text-red-400 text-xs rounded hover:bg-red-600 hover:text-white transition">Delete</button>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            ))
+                                        )}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* Products Tab */}
+                {activeTab === "products" && (
+                    <div>
+                        <div className="mb-8">
+                            <h1 className="text-3xl font-bold">Products Catalog</h1>
+                            <p className="text-gray-500 text-sm mt-1">Manage your dynamic products catalog.</p>
+                        </div>
+
+                        {/* Product Form */}
+                        <div className="bg-[#050a14] border border-[#1a2a3a] rounded-2xl p-6 mb-8">
+                            <h2 className="text-lg font-bold border-b border-[#1a2a3a] pb-3 mb-5">{editId ? "Edit Product" : "Add New Product"}</h2>
+                            <form onSubmit={saveProduct} className="space-y-4">
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div className="flex flex-col gap-1.5">
+                                        <label className="text-[11px] text-gray-400 font-semibold uppercase">Product Title</label>
+                                        <input type="text" required placeholder="e.g. IoT Sensor Node" value={productForm.title} onChange={e => setProductForm({ ...productForm, title: e.target.value })} />
+                                    </div>
+                                    <div className="flex flex-col gap-1.5">
+                                        <label className="text-[11px] text-gray-400 font-semibold uppercase">Price (PKR)</label>
+                                        <input type="number" required placeholder="e.g. 5000" value={productForm.price} onChange={e => setProductForm({ ...productForm, price: e.target.value })} />
+                                    </div>
+                                </div>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div className="flex flex-col gap-1.5">
+                                        <label className="text-[11px] text-gray-400 font-semibold uppercase">Category</label>
+                                        <input type="text" placeholder="e.g. Smart Hardware" value={productForm.category} onChange={e => setProductForm({ ...productForm, category: e.target.value })} />
+                                    </div>
+                                    <div className="flex flex-col gap-1.5">
+                                        <label className="text-[11px] text-gray-400 font-semibold uppercase">Featured</label>
+                                        <select value={productForm.featured} onChange={e => setProductForm({ ...productForm, featured: e.target.value })}>
+                                            <option value="false">No</option>
+                                            <option value="true">Yes — show highlighted</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div className="flex flex-col gap-1.5">
+                                    <label className="text-[11px] text-gray-400 font-semibold uppercase">Description</label>
+                                    <textarea required placeholder="Describe details of the product..." value={productForm.description} onChange={e => setProductForm({ ...productForm, description: e.target.value })}></textarea>
+                                </div>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div className="flex flex-col gap-1.5">
+                                        <label className="text-[11px] text-gray-400 font-semibold uppercase">Technologies (comma separated)</label>
+                                        <input type="text" placeholder="WiFi, LoRa, ESP32" value={productForm.technologies} onChange={e => setProductForm({ ...productForm, technologies: e.target.value })} />
+                                    </div>
+                                    <div className="flex flex-col gap-1.5">
+                                        <label className="text-[11px] text-gray-400 font-semibold uppercase">Features (comma separated)</label>
+                                        <input type="text" placeholder="Real-time alerts, IP67 Waterproof" value={productForm.features} onChange={e => setProductForm({ ...productForm, features: e.target.value })} />
+                                    </div>
+                                </div>
+                                <div className="flex flex-col gap-1.5">
+                                    <label className="text-[11px] text-gray-400 font-semibold uppercase">Product Image</label>
+                                    <input type="file" accept="image/*" onChange={e => setUploadedFile(e.target.files[0])} />
+                                </div>
+                                <div className="flex gap-2.5 pt-2">
+                                    <button type="submit" className="btn btn-primary">Save Product</button>
+                                    <button type="button" onClick={clearProductForm} className="btn btn-secondary">Clear</button>
+                                </div>
+                            </form>
+                        </div>
+
+                        {/* Products List */}
+                        <div className="bg-[#050a14] border border-[#1a2a3a] rounded-2xl p-6">
+                            <h2 className="text-lg font-bold border-b border-[#1a2a3a] pb-3 mb-5">All Products</h2>
+                            <div className="table-wrap">
+                                <table>
+                                    <thead>
+                                        <tr>
+                                            <th>Image</th>
+                                            <th>Title</th>
+                                            <th>Price</th>
+                                            <th>Category</th>
+                                            <th>Featured</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {products.length === 0 ? (
+                                            <tr>
+                                                <td colSpan="6" className="text-center py-8 text-gray-500">No products yet.</td>
+                                            </tr>
+                                        ) : (
+                                            products.map(p => (
+                                                <tr key={p._id}>
+                                                    <td>{p.image ? <img src={getImgUrl(p.image)} alt="product" className="w-12 h-12 object-cover rounded-lg" /> : "—"}</td>
+                                                    <td><strong>{p.title}</strong></td>
+                                                    <td>PKR {p.price || 0}</td>
+                                                    <td>{p.category || "—"}</td>
+                                                    <td>{p.featured ? <span className="badge badge-green">Yes</span> : <span className="text-gray-500">No</span>}</td>
+                                                    <td>
+                                                        <div className="flex gap-2">
+                                                            <button onClick={() => editProduct(p)} className="px-3 py-1.5 bg-slate-800 border border-slate-700 text-gray-300 text-xs rounded hover:text-white transition">Edit</button>
+                                                            <button onClick={() => deleteProduct(p._id)} className="px-3 py-1.5 bg-red-600/10 border border-red-500/20 text-red-400 text-xs rounded hover:bg-red-600 hover:text-white transition">Delete</button>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            ))
+                                        )}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* Team Tab */}
+                {activeTab === "team" && (
+                    <div>
+                        <div className="mb-8">
+                            <h1 className="text-3xl font-bold">Team Members</h1>
+                            <p className="text-gray-500 text-sm mt-1">Manage team members displayed on your about page.</p>
+                        </div>
+
+                        {/* Team Form */}
+                        <div className="bg-[#050a14] border border-[#1a2a3a] rounded-2xl p-6 mb-8">
+                            <h2 className="text-lg font-bold border-b border-[#1a2a3a] pb-3 mb-5">{editId ? "Edit Team Member" : "Add Team Member"}</h2>
+                            <form onSubmit={saveTeamMember} className="space-y-4">
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div className="flex flex-col gap-1.5">
+                                        <label className="text-[11px] text-gray-400 font-semibold uppercase">Full Name</label>
+                                        <input type="text" required placeholder="e.g. Dr. Shahzad Younis" value={teamForm.name} onChange={e => setTeamForm({ ...teamForm, name: e.target.value })} />
+                                    </div>
+                                    <div className="flex flex-col gap-1.5">
+                                        <label className="text-[11px] text-gray-400 font-semibold uppercase">Role / Position</label>
+                                        <input type="text" required placeholder="e.g. Chief Technical Officer" value={teamForm.role} onChange={e => setTeamForm({ ...teamForm, role: e.target.value })} />
+                                    </div>
+                                </div>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div className="flex flex-col gap-1.5">
+                                        <label className="text-[11px] text-gray-400 font-semibold uppercase">Department</label>
+                                        <select value={teamForm.department} onChange={e => setTeamForm({ ...teamForm, department: e.target.value })}>
+                                            <option value="">Select department</option>
+                                            <option value="Director & CEO">Director & CEO</option>
+                                            <option value="Team Leads">Team Leads</option>
+                                            <option value="Research & Development">Research & Development</option>
+                                            <option value="Sales & Marketing">Sales & Marketing</option>
+                                            <option value="Engineering">Engineering</option>
+                                            <option value="Design">Design</option>
+                                        </select>
+                                    </div>
+                                    <div className="flex flex-col gap-1.5">
+                                        <label className="text-[11px] text-gray-400 font-semibold uppercase">Featured (Highlight)</label>
+                                        <select value={teamForm.featured} onChange={e => setTeamForm({ ...teamForm, featured: e.target.value })}>
+                                            <option value="false">No</option>
+                                            <option value="true">Yes</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div className="flex flex-col gap-1.5">
+                                    <label className="text-[11px] text-gray-400 font-semibold uppercase">Photo File</label>
+                                    <input type="file" accept="image/*" onChange={e => setUploadedFile(e.target.files[0])} />
+                                </div>
+                                <div className="flex gap-2.5 pt-2">
+                                    <button type="submit" className="btn btn-primary">Save Member</button>
+                                    <button type="button" onClick={clearTeamForm} className="btn btn-secondary">Clear</button>
+                                </div>
+                            </form>
+                        </div>
+
+                        {/* Team Members List */}
+                        <div className="bg-[#050a14] border border-[#1a2a3a] rounded-2xl p-6">
+                            <h2 className="text-lg font-bold border-b border-[#1a2a3a] pb-3 mb-5">All Team Members</h2>
+                            <div className="table-wrap">
+                                <table>
+                                    <thead>
+                                        <tr>
+                                            <th>Photo</th>
+                                            <th>Name</th>
+                                            <th>Role</th>
+                                            <th>Department</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {team.length === 0 ? (
+                                            <tr>
+                                                <td colSpan="5" className="text-center py-8 text-gray-500">No team members yet.</td>
+                                            </tr>
+                                        ) : (
+                                            team.map(m => (
+                                                <tr key={m._id}>
+                                                    <td>{m.image ? <img src={getImgUrl(m.image)} alt="team" className="w-12 h-12 object-cover rounded-full" /> : "—"}</td>
+                                                    <td><strong>{m.name}</strong></td>
+                                                    <td>{m.role || "—"}</td>
+                                                    <td><span className="badge badge-cyan">{m.department || "—"}</span></td>
+                                                    <td>
+                                                        <div className="flex gap-2">
+                                                            <button onClick={() => editTeamMember(m)} className="px-3 py-1.5 bg-slate-800 border border-slate-700 text-gray-300 text-xs rounded hover:text-white transition">Edit</button>
+                                                            <button onClick={() => deleteTeamMember(m._id)} className="px-3 py-1.5 bg-red-600/10 border border-red-500/20 text-red-400 text-xs rounded hover:bg-red-600 hover:text-white transition">Delete</button>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            ))
+                                        )}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* Stories Tab */}
+                {activeTab === "stories" && (
+                    <div>
+                        <div className="mb-8">
+                            <h1 className="text-3xl font-bold">Story Sections</h1>
+                            <p className="text-gray-500 text-sm mt-1">Manage company timeline sections.</p>
+                        </div>
+
+                        {/* Story Form */}
+                        <div className="bg-[#050a14] border border-[#1a2a3a] rounded-2xl p-6 mb-8">
+                            <h2 className="text-lg font-bold border-b border-[#1a2a3a] pb-3 mb-5">{editId ? "Edit Story" : "Add Story Section"}</h2>
+                            <form onSubmit={saveStory} className="space-y-4">
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div className="flex flex-col gap-1.5">
+                                        <label className="text-[11px] text-gray-400 font-semibold uppercase">Title</label>
+                                        <input type="text" required placeholder="e.g. How We Started" value={storyForm.title} onChange={e => setStoryForm({ ...storyForm, title: e.target.value })} />
+                                    </div>
+                                    <div className="flex flex-col gap-1.5">
+                                        <label className="text-[11px] text-gray-400 font-semibold uppercase">Display Order (1 = first)</label>
+                                        <input type="number" required placeholder="1" value={storyForm.order} onChange={e => setStoryForm({ ...storyForm, order: e.target.value })} />
+                                    </div>
+                                </div>
+                                <div className="flex flex-col gap-1.5">
+                                    <label className="text-[11px] text-gray-400 font-semibold uppercase">Story Description</label>
+                                    <textarea required rows={4} placeholder="Write the story section..." value={storyForm.description} onChange={e => setStoryForm({ ...storyForm, description: e.target.value })}></textarea>
+                                </div>
+                                <div className="flex flex-col gap-1.5">
+                                    <label className="text-[11px] text-gray-400 font-semibold uppercase">Story Image (optional)</label>
+                                    <input type="file" accept="image/*" onChange={e => setUploadedFile(e.target.files[0])} />
+                                </div>
+                                <div className="flex gap-2.5 pt-2">
+                                    <button type="submit" className="btn btn-primary">Save Story</button>
+                                    <button type="button" onClick={clearStoryForm} className="btn btn-secondary">Clear</button>
+                                </div>
+                            </form>
+                        </div>
+
+                        {/* Stories List */}
+                        <div className="bg-[#050a14] border border-[#1a2a3a] rounded-2xl p-6">
+                            <h2 className="text-lg font-bold border-b border-[#1a2a3a] pb-3 mb-5">All Story Sections</h2>
+                            <div className="table-wrap">
+                                <table>
+                                    <thead>
+                                        <tr>
+                                            <th>Image</th>
+                                            <th>Title</th>
+                                            <th>Order</th>
+                                            <th>Preview</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {stories.length === 0 ? (
+                                            <tr>
+                                                <td colSpan="5" className="text-center py-8 text-gray-500">No stories yet.</td>
+                                            </tr>
+                                        ) : (
+                                            stories.map(s => (
+                                                <tr key={s._id}>
+                                                    <td>{s.image ? <img src={getImgUrl(s.image)} alt="story" className="w-12 h-12 object-cover rounded-lg" /> : "—"}</td>
+                                                    <td><strong>{s.title}</strong></td>
+                                                    <td style={{ textAlign: "center" }}>{s.order}</td>
+                                                    <td className="text-xs text-gray-400 max-w-[200px] truncate">{s.description}</td>
+                                                    <td>
+                                                        <div className="flex gap-2">
+                                                            <button onClick={() => editStory(s)} className="px-3 py-1.5 bg-slate-800 border border-slate-700 text-gray-300 text-xs rounded hover:text-white transition">Edit</button>
+                                                            <button onClick={() => deleteStory(s._id)} className="px-3 py-1.5 bg-red-600/10 border border-red-500/20 text-red-400 text-xs rounded hover:bg-red-600 hover:text-white transition">Delete</button>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            ))
+                                        )}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                )}
+            </main>
         </div>
     );
 }
