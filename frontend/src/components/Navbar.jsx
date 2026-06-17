@@ -42,7 +42,8 @@ function Navbar() {
                     <img
                         src="/new logo.png"
                         alt="logo"
-                        className="h-[64px] sm:h-[88px] w-auto object-contain -ml-1 sm:-ml-2 brightness-110 contrast-110 drop-shadow-[0_0_8px_rgba(255,215,0,0.15)] hover:scale-105 transition duration-300"
+                        style={{ filter: "invert(1) brightness(2.5) contrast(1.2) drop-shadow(0 0 8px rgba(255,255,255,0.2))" }}
+                        className="h-[64px] sm:h-[88px] w-auto object-contain -ml-1 sm:-ml-2 hover:scale-105 transition duration-300"
                     />
                 </div>
 
@@ -121,7 +122,7 @@ function Navbar() {
             >
                 {/* Header */}
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 16px", borderBottom: "1px solid rgba(255,255,255,0.08)" }}>
-                    <img src="/new logo.png" alt="logo" style={{ height: 48, objectFit: "contain" }} />
+                    <img src="/new logo.png" alt="logo" style={{ height: 48, objectFit: "contain", filter: "invert(1) brightness(2.5) contrast(1.2) drop-shadow(0 0 8px rgba(255,255,255,0.2))" }} />
                     <button
                         onClick={closeDrawer}
                         style={{ width: 32, height: 32, display: "flex", alignItems: "center", justifyContent: "center", borderRadius: 8, background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.6)", cursor: "pointer", fontSize: 14 }}
