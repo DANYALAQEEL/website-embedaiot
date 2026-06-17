@@ -202,7 +202,15 @@ function Solutions() {
                     From embedded systems to AIoT platforms, we deliver complete engineering solutions.
                 </p>
 
-                <button className="px-8 py-4 bg-cyan-500 text-black font-semibold rounded-full hover:scale-105 transition">
+                <button 
+                    onClick={() => {
+                        const contactSec = document.getElementById("contact");
+                        if (contactSec) {
+                            contactSec.scrollIntoView({ behavior: "smooth" });
+                        }
+                    }}
+                    className="px-8 py-4 bg-cyan-500 text-black font-semibold rounded-full hover:scale-105 transition"
+                >
                     Contact Us
                 </button>
 

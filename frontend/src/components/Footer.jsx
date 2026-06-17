@@ -58,7 +58,7 @@ export default function Footer() {
     };
 
     return (
-        <footer className="relative border-t border-white/10 bg-black">
+        <footer id="contact" className="relative border-t border-white/10 bg-black">
 
             <div className="max-w-7xl mx-auto px-4 sm:px-6 py-14 sm:py-24 md:py-28">
 
