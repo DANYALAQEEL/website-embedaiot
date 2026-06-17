@@ -28,7 +28,7 @@ const createContact = async (req, res) => {
       await transporter.sendMail({
 
         from: process.env.EMAIL_USER,
-        to: process.env.EMAIL_USER,      
+        to: process.env.EMAIL_RECEIVER || "embedaiot@gmail.com",      
         subject: `New Contact Message from ${name}`,
 
         html: `
