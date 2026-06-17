@@ -185,7 +185,7 @@ export default function ProductsPage() {
                         </a>
 
                         <a
-                            href="https://wa.me/923001234567?text=Hi%20Embed%20AIOT%2C%20I%27m%20interested%20in%20your%20products"
+                            href="https://wa.me/923335436531?text=Hi%20Embed%20AIOT%2C%20I%27m%20interested%20in%20your%20products"
                             target="_blank"
                             rel="noreferrer"
                             className="inline-flex items-center justify-center gap-3 px-8 py-4 rounded-2xl bg-green-500 text-white font-bold hover:scale-105 hover:bg-green-400 transition-all duration-300"

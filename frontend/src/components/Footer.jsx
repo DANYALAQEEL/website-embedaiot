@@ -25,7 +25,7 @@ export default function Footer() {
         { icon: FaYoutube, link: "https://youtube.com" },
     ];
 
-    const whatsappNumber = "923001234567"; // change this
+    const whatsappNumber = "923335436531"; // change this
 
     const handleChange = (e) => {
         setFormData({
@@ -95,7 +95,7 @@ export default function Footer() {
 
                             {/* WHATSAPP ICON */}
                             <a
-                                href={`https://wa.me/${923377056312}?text=Hello%20Embed%20AIOT%2C%20I%20want%20to%20know%20more`}
+                                href={`https://wa.me/${whatsappNumber}?text=Hello%20Embed%20AIOT%2C%20I%20want%20to%20know%20more`}
                                 target="_blank"
                                 rel="noreferrer"
                                 className="h-10 w-10 flex items-center justify-center rounded-lg bg-green-500/10 border border-green-500/30 text-green-400 hover:bg-green-500 hover:text-white transition"
@@ -228,7 +228,7 @@ export default function Footer() {
 
             {/* 🔥 FLOATING WHATSAPP BUTTON */}
             <a
-                href={`https://wa.me/${923377056312}?text=Hello%20Embed%20AIOT`}
+                href={`https://wa.me/${whatsappNumber}?text=Hello%20Embed%20AIOT`}
                 target="_blank"
                 rel="noreferrer"
                 className="fixed bottom-6 right-6 h-14 w-14 rounded-full bg-green-500 flex items-center justify-center text-white shadow-lg hover:scale-110 transition z-40"
