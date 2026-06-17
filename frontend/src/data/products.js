@@ -57,7 +57,7 @@ const products = [
 
     {
         id: 4,
-        slug: "IoT Devices",
+        slug: "sense-ball",
         name: "Sense Ball",
         category: "Automation",
         image: "/products/sense ball 1.png",
