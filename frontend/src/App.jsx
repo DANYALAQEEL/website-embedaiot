@@ -18,6 +18,7 @@ import Productspage from "./pages/Productspage";
 
 import ProductDetails from "./pages/ProductDetails";
 import Solutions from "./pages/Solutions";
+import AdminPortal from "./pages/AdminPortal";
 
 function HomePage() {
   return (
@@ -48,6 +49,7 @@ function App() {
             <Route path="/products" element={<Productspage />} />
             <Route path="/products/:slug" element={<ProductDetails />} />
             <Route path="/solutions" element={<Solutions />} />
+            <Route path="/admin" element={<AdminPortal />} />
           </Routes>
         </MainLayout>
       </div>

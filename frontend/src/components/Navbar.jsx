@@ -24,6 +24,7 @@ function Navbar() {
         { to: "/products", label: "Products", icon: "ti-box" },
         { to: "/about-us", label: "About Us", icon: "ti-users" },
         { to: "/solutions", label: "Solutions", icon: "ti-bulb" },
+        { to: "/admin", label: "Admin", icon: "ti-settings" },
     ];
 
     return (
