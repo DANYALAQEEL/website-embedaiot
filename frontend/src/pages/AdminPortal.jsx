@@ -188,11 +188,11 @@ export default function AdminPortal() {
         setActiveTab("dashboard");
     };
 
-    // Auto sign out after 15 minutes of inactivity
+    // Auto sign out after 60 minutes of inactivity
     useEffect(() => {
         if (!isLoggedIn) return;
 
-        const INACTIVITY_TIMEOUT = 15 * 60 * 1000; // 15 minutes
+        const INACTIVITY_TIMEOUT = 60 * 60 * 1000; // 60 minutes
         let timeoutId;
 
         const resetTimer = () => {
