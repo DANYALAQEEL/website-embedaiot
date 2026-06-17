@@ -1,13 +1,14 @@
 import { portfolioProjects } from "../../data/portfolioData";
 import PortfolioCard from "./PortfolioCard";
 import { useState, useEffect } from "react";
+import { API_URL } from "../../config";
 
 function Portfolio() {
     const [activeFilter, setActiveFilter] = useState("All");
     const [projects, setProjects] = useState(portfolioProjects);
 
     useEffect(() => {
-        fetch("http://localhost:5000/api/portfolio")
+        fetch(`${API_URL}/api/portfolio`)
             .then(res => {
                 if (!res.ok) throw new Error("API error");
                 return res.json();
@@ -18,7 +19,7 @@ function Portfolio() {
                         id: p._id,
                         title: p.title,
                         category: p.category,
-                        image: p.image ? (p.image.startsWith("http") ? p.image : (p.image.startsWith("/") ? `http://localhost:5000${p.image}` : `http://localhost:5000/${p.image}`)) : "/placeholder.png",
+                        image: p.image ? (p.image.startsWith("http") ? p.image : (p.image.startsWith("/") ? `${API_URL}${p.image}` : `${API_URL}/${p.image}`)) : "/placeholder.png",
                         description: p.description,
                         technologies: p.technologies || []
                     }));

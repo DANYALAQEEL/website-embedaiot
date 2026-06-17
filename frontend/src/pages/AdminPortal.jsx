@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { API_URL } from "../config";
 
 export default function AdminPortal() {
     const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -75,7 +76,7 @@ export default function AdminPortal() {
     const loadDashboardCounts = async (authToken) => {
         const fetchCount = async (endpoint) => {
             try {
-                const res = await fetch(`http://localhost:5000/api/${endpoint}`);
+                const res = await fetch(`${API_URL}/api/${endpoint}`);
                 const data = await res.json();
                 return Array.isArray(data) ? data.length : 0;
             } catch {
@@ -90,12 +91,14 @@ export default function AdminPortal() {
 
         let mCount = 0;
         try {
-            const res = await fetch("http://localhost:5000/api/contact", {
+            const res = await fetch(`${API_URL}/api/contact`, {
                 headers: { "Authorization": `Bearer ${authToken}` }
             });
             const data = await res.json();
             mCount = Array.isArray(data) ? data.length : 0;
-        } catch {}
+        } catch (err) {
+            console.error("Error loading dashboard contact counts:", err);
+        }
 
         setCounts({
             portfolio: pCount,
@@ -113,31 +116,31 @@ export default function AdminPortal() {
 
         try {
             if (tab === "messages") {
-                const res = await fetch("http://localhost:5000/api/contact", { headers });
+                const res = await fetch(`${API_URL}/api/contact`, { headers });
                 const data = await res.json();
                 if (Array.isArray(data)) setMessages(data);
             } else if (tab === "portfolio") {
-                const res = await fetch("http://localhost:5000/api/portfolio");
+                const res = await fetch(`${API_URL}/api/portfolio`);
                 const data = await res.json();
                 if (Array.isArray(data)) setPortfolio(data);
             } else if (tab === "services") {
-                const res = await fetch("http://localhost:5000/api/services");
+                const res = await fetch(`${API_URL}/api/services`);
                 const data = await res.json();
                 if (Array.isArray(data)) setServices(data);
             } else if (tab === "products") {
-                const res = await fetch("http://localhost:5000/api/products");
+                const res = await fetch(`${API_URL}/api/products`);
                 const data = await res.json();
                 if (Array.isArray(data)) setProducts(data);
             } else if (tab === "team") {
-                const res = await fetch("http://localhost:5000/api/team");
+                const res = await fetch(`${API_URL}/api/team`);
                 const data = await res.json();
                 if (Array.isArray(data)) setTeam(data);
             } else if (tab === "stories") {
-                const res = await fetch("http://localhost:5000/api/stories");
+                const res = await fetch(`${API_URL}/api/stories`);
                 const data = await res.json();
                 if (Array.isArray(data)) setStories(data);
             } else if (tab === "users") {
-                const res = await fetch("http://localhost:5000/api/admin/users", { headers });
+                const res = await fetch(`${API_URL}/api/admin/users`, { headers });
                 const data = await res.json();
                 if (Array.isArray(data)) setUsers(data);
             }
@@ -154,7 +157,7 @@ export default function AdminPortal() {
         const body = { email: authForm.email, password: authForm.password };
 
         try {
-            const res = await fetch("http://localhost:5000/api/admin/login", {
+            const res = await fetch(`${API_URL}/api/admin/login`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(body),
@@ -262,7 +265,7 @@ export default function AdminPortal() {
     const getImgUrl = (path) => {
         if (!path) return "";
         if (path.startsWith("http")) return path;
-        return `http://localhost:5000${path}`;
+        return `${API_URL}${path}`;
     };
 
     // ── PORTFOLIO ACTIONS ──
@@ -280,7 +283,7 @@ export default function AdminPortal() {
         if (portfolioForm.clientName) form.append("clientName", portfolioForm.clientName);
         if (uploadedFile) form.append("image", uploadedFile);
 
-        const url = editId ? `http://localhost:5000/api/portfolio/${editId}` : "http://localhost:5000/api/portfolio";
+        const url = editId ? `${API_URL}/api/portfolio/${editId}` : `${API_URL}/api/portfolio`;
         const method = editId ? "PUT" : "POST";
 
         try {
@@ -308,7 +311,7 @@ export default function AdminPortal() {
     const deletePortfolio = async (id) => {
         if (!window.confirm("Delete this project?")) return;
         try {
-            await handleApiRequest(`http://localhost:5000/api/portfolio/${id}`, "DELETE");
+            await handleApiRequest(`${API_URL}/api/portfolio/${id}`, "DELETE");
             triggerAlert("Project deleted!");
             loadTabData("portfolio", token);
         } catch (err) {
@@ -336,7 +339,7 @@ export default function AdminPortal() {
         form.append("featured", serviceForm.featured);
         if (uploadedFile) form.append("image", uploadedFile);
 
-        const url = editId ? `http://localhost:5000/api/services/${editId}` : "http://localhost:5000/api/services";
+        const url = editId ? `${API_URL}/api/services/${editId}` : `${API_URL}/api/services`;
         const method = editId ? "PUT" : "POST";
 
         try {
@@ -363,7 +366,7 @@ export default function AdminPortal() {
     const deleteService = async (id) => {
         if (!window.confirm("Delete this service?")) return;
         try {
-            await handleApiRequest(`http://localhost:5000/api/services/${id}`, "DELETE");
+            await handleApiRequest(`${API_URL}/api/services/${id}`, "DELETE");
             triggerAlert("Service deleted!");
             loadTabData("services", token);
         } catch (err) {
@@ -394,7 +397,7 @@ export default function AdminPortal() {
         form.append("features", productForm.features);
         if (uploadedFile) form.append("image", uploadedFile);
 
-        const url = editId ? `http://localhost:5000/api/products/${editId}` : "http://localhost:5000/api/products";
+        const url = editId ? `${API_URL}/api/products/${editId}` : `${API_URL}/api/products`;
         const method = editId ? "PUT" : "POST";
 
         try {
@@ -424,7 +427,7 @@ export default function AdminPortal() {
     const deleteProduct = async (id) => {
         if (!window.confirm("Delete this product?")) return;
         try {
-            await handleApiRequest(`http://localhost:5000/api/products/${id}`, "DELETE");
+            await handleApiRequest(`${API_URL}/api/products/${id}`, "DELETE");
             triggerAlert("Product deleted!");
             loadTabData("products", token);
         } catch (err) {
@@ -455,7 +458,7 @@ export default function AdminPortal() {
         form.append("featured", teamForm.featured);
         if (uploadedFile) form.append("image", uploadedFile);
 
-        const url = editId ? `http://localhost:5000/api/team/${editId}` : "http://localhost:5000/api/team";
+        const url = editId ? `${API_URL}/api/team/${editId}` : `${API_URL}/api/team`;
         const method = editId ? "PUT" : "POST";
 
         try {
@@ -482,7 +485,7 @@ export default function AdminPortal() {
     const deleteTeamMember = async (id) => {
         if (!window.confirm("Delete this team member?")) return;
         try {
-            await handleApiRequest(`http://localhost:5000/api/team/${id}`, "DELETE");
+            await handleApiRequest(`${API_URL}/api/team/${id}`, "DELETE");
             triggerAlert("Team member deleted!");
             loadTabData("team", token);
         } catch (err) {
@@ -509,7 +512,7 @@ export default function AdminPortal() {
         form.append("order", storyForm.order);
         if (uploadedFile) form.append("image", uploadedFile);
 
-        const url = editId ? `http://localhost:5000/api/stories/${editId}` : "http://localhost:5000/api/stories";
+        const url = editId ? `${API_URL}/api/stories/${editId}` : `${API_URL}/api/stories`;
         const method = editId ? "PUT" : "POST";
 
         try {
@@ -535,7 +538,7 @@ export default function AdminPortal() {
     const deleteStory = async (id) => {
         if (!window.confirm("Delete this story section?")) return;
         try {
-            await handleApiRequest(`http://localhost:5000/api/stories/${id}`, "DELETE");
+            await handleApiRequest(`${API_URL}/api/stories/${id}`, "DELETE");
             triggerAlert("Story section deleted!");
             loadTabData("stories", token);
         } catch (err) {
@@ -553,7 +556,7 @@ export default function AdminPortal() {
     const createUser = async (e) => {
         e.preventDefault();
         try {
-            await handleApiRequest("http://localhost:5000/api/admin/register", "POST", JSON.stringify(userForm));
+            await handleApiRequest(`${API_URL}/api/admin/register`, "POST", JSON.stringify(userForm));
             triggerAlert("Account created successfully!");
             setUserForm({ name: "", email: "", password: "", role: "staff" });
             loadTabData("users", token);
@@ -565,7 +568,7 @@ export default function AdminPortal() {
     const deleteUser = async (id) => {
         if (!window.confirm("Are you sure you want to delete this account?")) return;
         try {
-            await handleApiRequest(`http://localhost:5000/api/admin/users/${id}`, "DELETE");
+            await handleApiRequest(`${API_URL}/api/admin/users/${id}`, "DELETE");
             triggerAlert("Account deleted successfully!");
             loadTabData("users", token);
         } catch (err) {
@@ -577,7 +580,7 @@ export default function AdminPortal() {
     const deleteMessage = async (id) => {
         if (!window.confirm("Delete this message?")) return;
         try {
-            await handleApiRequest(`http://localhost:5000/api/contact/${id}`, "DELETE");
+            await handleApiRequest(`${API_URL}/api/contact/${id}`, "DELETE");
             triggerAlert("Message deleted!");
             loadTabData("messages", token);
         } catch (err) {

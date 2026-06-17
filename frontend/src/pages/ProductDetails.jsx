@@ -1,6 +1,7 @@
 import { useParams } from "react-router-dom";
 import { useEffect, useState } from "react";
 import staticProducts from "../data/products";
+import { API_URL } from "../config";
 
 export default function ProductDetails() {
     const { slug } = useParams();
@@ -10,7 +11,7 @@ export default function ProductDetails() {
     useEffect(() => {
         const staticProduct = staticProducts.find((p) => p.slug === slug);
         
-        fetch(`http://localhost:5000/api/products/slug/${slug}`)
+        fetch(`${API_URL}/api/products/slug/${slug}`)
             .then(res => {
                 if (!res.ok) throw new Error("API error");
                 return res.json();
@@ -22,7 +23,7 @@ export default function ProductDetails() {
                         slug: data.slug,
                         name: data.title || data.name,
                         category: data.category,
-                        image: data.image ? (data.image.startsWith("http") ? data.image : (data.image.startsWith("/") ? `http://localhost:5000${data.image}` : `http://localhost:5000/${data.image}`)) : "/placeholder.png",
+                        image: data.image ? (data.image.startsWith("http") ? data.image : (data.image.startsWith("/") ? `${API_URL}${data.image}` : `${API_URL}/${data.image}`)) : "/placeholder.png",
                         description: data.description,
                         technologies: data.technologies || [],
                         features: data.features || []

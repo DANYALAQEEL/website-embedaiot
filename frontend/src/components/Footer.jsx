@@ -9,6 +9,8 @@ import {
 import { Mail, MapPin } from "lucide-react";
 import { useState } from "react";
 import { Link } from "react-router-dom";
+import { API_URL } from "../config";
+
 export default function Footer() {
 
     const [formData, setFormData] = useState({
@@ -38,7 +40,7 @@ export default function Footer() {
         e.preventDefault();
 
         try {
-            const res = await fetch("http://localhost:5000/api/contact", {
+            const res = await fetch(`${API_URL}/api/contact`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",

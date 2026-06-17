@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import Footer from "../components/Footer";
+import { API_URL } from "../config";
 
 // ------------------------------
 // 1. SAMPLE DATA (You can later move this to API or JSON file)
@@ -114,7 +115,7 @@ export default function OurStory() {
     const [stories, setStories] = useState(storiesData);
 
     useEffect(() => {
-        fetch("http://localhost:5000/api/stories")
+        fetch(`${API_URL}/api/stories`)
             .then(res => {
                 if (!res.ok) throw new Error("API error");
                 return res.json();
@@ -127,7 +128,7 @@ export default function OurStory() {
                         title: s.title,
                         date: s.date || new Date(s.createdAt).toLocaleDateString(),
                         description: s.description,
-                        images: s.images ? s.images.map(img => img.startsWith("http") ? img : (img.startsWith("/") ? `http://localhost:5000${img}` : `http://localhost:5000/${img}`)) : []
+                        images: s.images ? s.images.map(img => img.startsWith("http") ? img : (img.startsWith("/") ? `${API_URL}${img}` : `${API_URL}/${img}`)) : []
                     }));
                     
                     // Keep hardcoded stories and append backend stories without duplicating titles

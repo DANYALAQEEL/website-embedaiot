@@ -92,7 +92,7 @@ function Solutions() {
                         Our Solutions
                     </p>
 
-                    <h1 className="text-4xl sm:text-3xl sm:text-5xl md:text-7xl leading-tight">
+                    <h1 className="text-4xl sm:text-5xl md:text-7xl leading-tight">
                         <span className="font-light">Engineering Integrated Systems.</span>
                         <br />
                         <span className="font-bold">Hardware. Software. Intelligence.</span>

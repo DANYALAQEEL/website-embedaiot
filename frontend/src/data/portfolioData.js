@@ -19,7 +19,7 @@ export const portfolioProjects = [
     {
         id: 2,
         title: "Real Time Object Detection System",
-        category: "Detection SystemArtificial Intelligence / Computer Vision",
+        category: "AI & Computer Vision",
         image: "/src/assets/portfolio/object detection.png",
 
         description:

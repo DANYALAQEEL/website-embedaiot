@@ -1,12 +1,13 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import staticProducts from "../data/products";
+import { API_URL } from "../config";
 
 export default function ProductsPage() {
     const [productList, setProductList] = useState(staticProducts);
 
     useEffect(() => {
-        fetch("http://localhost:5000/api/products")
+        fetch(`${API_URL}/api/products`)
             .then(res => {
                 if (!res.ok) throw new Error("API error");
                 return res.json();
@@ -18,7 +19,7 @@ export default function ProductsPage() {
                         slug: p.slug,
                         name: p.title || p.name,
                         category: p.category,
-                        image: p.image ? (p.image.startsWith("http") ? p.image : (p.image.startsWith("/") ? `http://localhost:5000${p.image}` : `http://localhost:5000/${p.image}`)) : "/placeholder.png",
+                        image: p.image ? (p.image.startsWith("http") ? p.image : (p.image.startsWith("/") ? `${API_URL}${p.image}` : `${API_URL}/${p.image}`)) : "/placeholder.png",
                         description: p.description,
                         technologies: p.technologies || [],
                         features: p.features || []

@@ -35,9 +35,9 @@ const products = [
 
     {
         id: 3,
-        slug: "bess-system",
+        slug: "soil-npk-meter",
         name: "Soil NPK Meter",
-        category: "Energy Storage",
+        category: "Smart Agriculture",
         image: "/products/soil npk meter.png",
         description:
             "A smart soil analysis device that measures NPK (nitrogen, phosphorus, potassium) levels to help farmers improve soil fertility, optimize fertilizer use, and increase crop productivity.",
