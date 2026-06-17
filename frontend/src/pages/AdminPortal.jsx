@@ -203,20 +203,37 @@ export default function AdminPortal() {
             }, INACTIVITY_TIMEOUT);
         };
 
-        const activityEvents = ["mousedown", "mousemove", "keypress", "scroll", "touchstart"];
+        const handleVisibilityOrFocus = () => {
+            if (document.visibilityState === "visible") {
+                resetTimer();
+            }
+        };
+
+        const activityEvents = ["mousedown", "mousemove", "keypress", "scroll", "touchstart", "focus"];
         activityEvents.forEach(event => {
             window.addEventListener(event, resetTimer);
         });
+        document.addEventListener("visibilitychange", handleVisibilityOrFocus);
+
+        // Keep session alive if page is active, visible, and screen is on
+        const intervalId = setInterval(() => {
+            if (document.visibilityState === "visible" && document.hasFocus()) {
+                resetTimer();
+            }
+        }, 60000); // Check every minute
 
         resetTimer();
 
         return () => {
             if (timeoutId) clearTimeout(timeoutId);
+            clearInterval(intervalId);
             activityEvents.forEach(event => {
                 window.removeEventListener(event, resetTimer);
             });
+            document.removeEventListener("visibilitychange", handleVisibilityOrFocus);
         };
     }, [isLoggedIn]);
+
 
 
     // Generic API call helper (POST/PUT/DELETE)
