@@ -22,7 +22,15 @@ function Portfolio() {
                         description: p.description,
                         technologies: p.technologies || []
                     }));
-                    setProjects(mapped);
+                    
+                    // Keep hardcoded projects and append backend projects without duplicating titles
+                    const combined = [...portfolioProjects];
+                    mapped.forEach(p => {
+                        if (!combined.some(cp => cp.title === p.title)) {
+                            combined.push(p);
+                        }
+                    });
+                    setProjects(combined);
                 }
             })
             .catch(err => console.log("Failed to fetch portfolio from backend, using static:", err));

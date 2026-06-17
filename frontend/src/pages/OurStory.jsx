@@ -129,7 +129,15 @@ export default function OurStory() {
                         description: s.description,
                         images: s.images ? s.images.map(img => img.startsWith("http") ? img : (img.startsWith("/") ? `http://localhost:5000${img}` : `http://localhost:5000/${img}`)) : []
                     }));
-                    setStories(mapped);
+                    
+                    // Keep hardcoded stories and append backend stories without duplicating titles
+                    const combined = [...storiesData];
+                    mapped.forEach(s => {
+                        if (!combined.some(cs => cs.title === s.title)) {
+                            combined.push(s);
+                        }
+                    });
+                    setStories(combined);
                 }
             })
             .catch(err => console.log("Failed to fetch stories from backend:", err));

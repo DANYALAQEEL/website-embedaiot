@@ -23,7 +23,15 @@ export default function ProductsPage() {
                         technologies: p.technologies || [],
                         features: p.features || []
                     }));
-                    setProductList(mapped);
+                    
+                    // Keep hardcoded products and append backend products without duplicating slugs
+                    const combined = [...staticProducts];
+                    mapped.forEach(p => {
+                        if (!combined.some(cp => cp.slug === p.slug)) {
+                            combined.push(p);
+                        }
+                    });
+                    setProductList(combined);
                 }
             })
             .catch(err => console.log("Failed to fetch products from backend, using static:", err));
