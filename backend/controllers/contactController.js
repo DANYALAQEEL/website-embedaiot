@@ -26,8 +26,8 @@ const createContact = async (req, res) => {
     if (process.env.EMAIL_USER && process.env.EMAIL_PASS) {
       // STEP 3 — send email to your client
       await transporter.sendMail({
-
-        from: process.env.EMAIL_USER,
+        from: `"${name}" <${email}>`,
+        replyTo: email,
         to: process.env.EMAIL_RECEIVER || "embedaiot@gmail.com",      
         subject: `New Contact Message from ${name}`,
 
