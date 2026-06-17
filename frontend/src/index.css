@@ -1,0 +1,54 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+.navbar-logo {
+    height: 86px;
+    width: auto;
+    object-fit: contain;
+    filter: drop-shadow(0 0 10px rgba(0, 0, 0, 0.7)) drop-shadow(0 0 14px rgba(255, 255, 255, 0.25));
+    transition: transform 0.3s ease;
+}
+
+.navbar-logo:hover {
+    transform: scale(1.05);
+}
+
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+}
+
+html {
+    scroll-behavior: smooth;
+    overflow-x: hidden;
+    max-width: 100%;
+}
+
+body {
+    overflow-x: hidden;
+    max-width: 100%;
+    position: relative;
+}
+
+#root {
+    overflow-x: hidden;
+    max-width: 100vw;
+    position: relative;
+}
+
+@media (max-width: 768px) {
+
+    button,
+    a {
+        min-height: 44px;
+    }
+
+    h1,
+    h2,
+    h3 {
+        overflow-wrap: break-word;
+        word-break: break-word;
+    }
+}
