@@ -5,24 +5,24 @@ function Testimonials() {
 
     const testimonials = [
         {
-            text: "The agile sprint process they used was very efficient and well structured.",
-            name: "Fr. Joseph Fessio",
-            role: "Founder & Editor, Ignatius Press"
+            text: "The Soil Moisture Meter has revolutionized our water management. It eliminates the guesswork in irrigation, preventing root rot and ensuring our crops remain perfectly hydrated.",
+            name: "Dr. Faisal Mahmood",
+            role: "Head of Sustainable Sourcing, Nestle"
         },
         {
-            text: "I like how much effort they put into planning and development phase.",
-            name: "Jesse Ugwuegbu",
-            role: "CEO, SynQ Audio Inc."
+            text: "By providing real-time nitrogen, phosphorus, and potassium levels, the Soil NPK Meter allows us to optimize fertilizer use, boost crop health, and implement precision farming.",
+            name: "Dr. Sarah Khan",
+            role: "Chief Agronomist, Nestle Agricultural Services"
         },
         {
-            text: "They were attentive to deadlines and delivered everything on time.",
-            name: "Alexander Johnson",
-            role: "Partner, Mixt Solutions"
+            text: "The AQMS gives us highly accurate, real-time tracking of indoor air parameters and emissions. It plays a key role in maintaining compliance and protecting our workers' health.",
+            name: "Mr. Tariq Bajwa",
+            role: "Head of EHS, Koh e Noor Textile Mills"
         },
         {
-            text: "Highly professional team with strong technical execution.",
-            name: "Michael Brown",
-            role: "Tech Director, Nexa Systems"
+            text: "This security system has vastly upgraded our campus safety. The real-time alerts and AI-integrated cameras provide our control room with excellent situational awareness.",
+            name: "Dr. Muhammad Sajid",
+            role: "Head of IT & Campus Security, NUST"
         }
     ];
 
