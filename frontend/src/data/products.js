@@ -72,40 +72,6 @@ const products = [
             "Acoustic Signatures Detection",
         ],
     },
-
-    {
-        id: 5,
-        slug: "industrial-iot-monitoring",
-        name: "Industrial IoT Monitoring",
-        category: "Industrial",
-        image: "/products/industrial-iot.jpg",
-        description:
-            "Industrial monitoring solution with predictive maintenance and real-time analytics.",
-        technologies: ["IIoT", "AI", "Machine Learning", "Cloud Systems"],
-        features: [
-            "Predictive maintenance",
-            "Machine monitoring",
-            "Cloud analytics",
-            "Industrial automation",
-        ],
-    },
-
-    {
-        id: 6,
-        slug: "smart-security-system",
-        name: "Smart Security System",
-        category: "Security",
-        image: "/products/security.jpg",
-        description:
-            "AI-powered surveillance and security monitoring system for homes and businesses.",
-        technologies: ["AI Vision", "IoT Cameras", "Cloud Security"],
-        features: [
-            "Motion detection",
-            "Remote surveillance",
-            "AI facial recognition",
-            "Real-time alerts",
-        ],
-    },
 ];
 
 export default products;
