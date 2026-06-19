@@ -63,7 +63,22 @@ export default function AdminPortal() {
         const storedToken = localStorage.getItem("adminToken");
         const storedRole = localStorage.getItem("adminRole") || "staff";
         const storedName = localStorage.getItem("adminName") || "";
-        if (storedToken) {
+        const storedLastActive = localStorage.getItem("adminLastActive");
+        const now = Date.now();
+        const INACTIVITY_TIMEOUT = 60 * 60 * 1000; // 60 minutes
+
+        if (storedToken && storedLastActive && (now - parseInt(storedLastActive, 10) > INACTIVITY_TIMEOUT)) {
+            // Log out immediately if expired
+            localStorage.removeItem("adminToken");
+            localStorage.removeItem("adminRole");
+            localStorage.removeItem("adminName");
+            localStorage.removeItem("adminLastActive");
+            setToken("");
+            setRole("staff");
+            setName("");
+            setIsLoggedIn(false);
+        } else if (storedToken) {
+            localStorage.setItem("adminLastActive", now.toString());
             setToken(storedToken);
             setRole(storedRole);
             setName(storedName);
@@ -169,6 +184,7 @@ export default function AdminPortal() {
             localStorage.setItem("adminToken", data.token);
             localStorage.setItem("adminRole", data.role || "staff");
             localStorage.setItem("adminName", data.name || "User");
+            localStorage.setItem("adminLastActive", Date.now().toString());
             setToken(data.token);
             setRole(data.role || "staff");
             setName(data.name || "User");
@@ -184,6 +200,7 @@ export default function AdminPortal() {
         localStorage.removeItem("adminToken");
         localStorage.removeItem("adminRole");
         localStorage.removeItem("adminName");
+        localStorage.removeItem("adminLastActive");
         setToken("");
         setRole("staff");
         setName("");
@@ -197,8 +214,14 @@ export default function AdminPortal() {
 
         const INACTIVITY_TIMEOUT = 60 * 60 * 1000; // 60 minutes
         let timeoutId;
+        let lastWrite = 0;
 
         const resetTimer = () => {
+            const now = Date.now();
+            if (now - lastWrite > 5000) { // Throttled to prevent excessive writing on mouse move
+                localStorage.setItem("adminLastActive", now.toString());
+                lastWrite = now;
+            }
             if (timeoutId) clearTimeout(timeoutId);
             timeoutId = setTimeout(() => {
                 handleLogout();
