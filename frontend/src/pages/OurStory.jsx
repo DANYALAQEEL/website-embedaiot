@@ -15,8 +15,7 @@ const storiesData = [
         description:
             "We welcomed our first batch of interns who worked on real-world projects and learned modern tech stacks.",
         images: [
-            "/public/lab.png"
-
+            "/lab.png"
         ]
     },
     {
@@ -39,8 +38,7 @@ const storiesData = [
         description:
             "Behind every product is a team working late nights, solving bugs and building systems.",
         images: [
-            "/public/team.png"
-
+            "/team.png"
         ]
     },
     {

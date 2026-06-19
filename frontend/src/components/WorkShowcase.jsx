@@ -8,9 +8,9 @@ function WorkShowcase() {
         title: "Hybrid Powered Fruit Drying System",
         desc: "An intelligent hybrid energy-based drying system designed for post-harvest optimization using AI control and IoT monitoring. It enhances efficiency, reduces waste, and modernizes agricultural processing.",
         images: [
-            "/public/2.png",
-            "/public/blender 6. back.png",
-            "/public/fruit harvester isometric.png"
+            "/2.png",
+            "/blender 6. back.png",
+            "/fruit harvester isometric.png"
         ]
     };
 
@@ -19,17 +19,17 @@ function WorkShowcase() {
         {
             title: "Embedded Systems",
             desc: "Smart hardware solutions powering real-world automation.",
-            img: "/public/embed 1.png"
+            img: "/embed 1.png"
         },
         {
             title: "IoT Solutions",
             desc: "Connected devices enabling smart environments.",
-            img: "/public/IOT 1.png"
+            img: "/IOT 1.png"
         },
         {
             title: "AQMS",
             desc: "An IoT-based system that monitors indoor air quality in real time using sensors to detect airborne particles and gases.",
-            img: "/public/aqms.jpeg"
+            img: "/aqms.jpeg"
         }
     ];
 
