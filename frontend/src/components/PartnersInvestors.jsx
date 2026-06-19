@@ -1,20 +1,31 @@
 
+import partner2 from "../assets/partners/partner-logo-2.png";
+import partner3 from "../assets/partners/partner-logo-3.png";
+import partner4 from "../assets/partners/partner-logo-4.png";
+import partner5 from "../assets/partners/partner-logo-5.png";
+import microsoftLogo from "../assets/partners/Microsoft-Logo.png";
+
+import asset1 from "../assets/investors/Asset1.jpg";
+import asset2 from "../assets/investors/Asset-2.jpg";
+import asset3 from "../assets/investors/Asset-3.jpg";
+import asset4 from "../assets/investors/Asset-4.jpg";
+import asset5 from "../assets/investors/Asset-5.jpg";
+
 function PartnersInvestors() {
     const partners = [
-        "/src/assets/partners/partner-logo-2.png",
-        "/src/assets/partners/partner-logo-3.png",
-        "/src/assets/partners/partner-logo-4.png",
-        "/src/assets/partners/partner-logo-5.png",
-        "/src/assets/partners/Microsoft-logo.png",
+        partner2,
+        partner3,
+        partner4,
+        partner5,
+        microsoftLogo
     ];
 
     const investors = [
-        "/src/assets/investors/Asset1.jpg",
-        "/src/assets/investors/Asset-2.jpg",
-        "/src/assets/investors/Asset-3.jpg",
-        "/src/assets/investors/Asset-4.jpg",
-        "/src/assets/investors/Asset-5.jpg",
-
+        asset1,
+        asset2,
+        asset3,
+        asset4,
+        asset5
     ];
 
     const LogoRow = ({ title, logos }) => (
