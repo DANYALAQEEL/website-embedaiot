@@ -1,17 +1,20 @@
+import silosImg from "../assets/portfolio/silos 2.png";
+import objDetectionImg from "../assets/portfolio/object detection.png";
+import trafficImg from "../assets/portfolio/traffic.png";
+import bmsImg from "../assets/portfolio/bms.png";
+import wheatImg from "../assets/portfolio/wheat.png";
+import robotImg from "../assets/portfolio/robot.png";
+
 export const portfolioProjects = [
 
     {
         id: 1,
         title: "Smart Silos",
         category: "Smart Agriculture",
-        image: "/src/assets/portfolio/silos 2.png",
+        image: silosImg,
 
         description:
             "Smart Silos are an automated grain storage solution that reduces spoilage and post-harvest losses by continuously monitoring storage conditions and automatically controlling heating and ventilation. Powered by solar energy and IoT connectivity, they enable remote monitoring and management while maintaining optimal grain quality.",
-
-
-
-
 
         technologies: ["IoT", "Solar Energy", "Environmental Sensors", "Automation"],
     },
@@ -20,7 +23,7 @@ export const portfolioProjects = [
         id: 2,
         title: "Real Time Object Detection System",
         category: "AI & Computer Vision",
-        image: "/src/assets/portfolio/object detection.png",
+        image: objDetectionImg,
 
         description:
             "Real-Time Object Detection System uses AI-powered computer vision to detect vehicles, pedestrians, and obstacles with high accuracy by combining camera and radar data. It is ideal for autonomous systems, surveillance, and smart transportation applications.",
@@ -32,7 +35,7 @@ export const portfolioProjects = [
         id: 3,
         title: "Video Based Adaptive Light Controller",
         category: "AI, IoT",
-        image: "/src/assets/portfolio/traffic.png",
+        image: trafficImg,
 
         description:
             "This system analyzes live traffic using video feeds and automatically adjusts signal timings based on real-time congestion, improving traffic flow and reducing jams in urban areas.",
@@ -44,7 +47,7 @@ export const portfolioProjects = [
         id: 4,
         title: "BMS for EVs",
         category: "Embedded Systems & Electric Vehicle Technology",
-        image: "/src/assets/portfolio/bms.png",
+        image: bmsImg,
 
         description:
             "The Battery Management System (BMS) is essential for EVs, ensuring safe and efficient battery operation by monitoring voltage, current, temperature, and state of charge. It also prevents overcharging and deep discharging, improving battery life, reliability, and overall vehicle performance.",
@@ -56,7 +59,7 @@ export const portfolioProjects = [
         id: 5,
         title: "Wheat Disease Classification",
         category: "Agricultural AI",
-        image: "/src/assets/portfolio/wheat.png",
+        image: wheatImg,
 
         description:
             "The Wheat Disease Classification System uses AI to detect wheat diseases like powdery mildew, leaf rust, black chaff, smut, and leaf blotch from images and sensor data, helping farmers reduce crop losses and improve yield quality.",
@@ -68,7 +71,7 @@ export const portfolioProjects = [
         id: 6,
         title: "Agricultural Robot",
         category: "Agricultural Robotics",
-        image: "/src/assets/portfolio/robot.png",
+        image: robotImg,
 
         description:
             "The Agricultural Robot is an AI-based smart farming system that performs real-time monitoring, weed detection, crop yield estimation, and soil sensing to support precision agriculture and improve farm productivity.",

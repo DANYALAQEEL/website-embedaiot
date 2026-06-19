@@ -49,7 +49,7 @@ const storiesData = [
         description:
             "stay connected with us on social media!",
         images: [
-            "https://unsplash.com/photos/a-phone-displays-a-social-media-profile-9VPIy0a-OxE"
+            "https://images.unsplash.com/photo-1611162617213-7d7a39e9b1d7?auto=format&fit=crop&w=600&q=80"
         ]
     },
     {
@@ -60,7 +60,7 @@ const storiesData = [
         description:
             "participated in various events and seminars",
         images: [
-            "https://unsplash.com/photos/people-sitting-on-chairs-rE9vgD_TXgM"
+            "https://images.unsplash.com/photo-1540575467063-178a50c2df87?auto=format&fit=crop&w=600&q=80"
         ]
     }
 ];

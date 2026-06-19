@@ -228,16 +228,6 @@ export default function Footer() {
 
             </div>
 
-            {/* 🔥 FLOATING WHATSAPP BUTTON */}
-            <a
-                href={`https://wa.me/${whatsappNumber}?text=Hello%20Embed%20AIOT`}
-                target="_blank"
-                rel="noreferrer"
-                className="fixed bottom-6 right-6 h-14 w-14 rounded-full bg-green-500 flex items-center justify-center text-white shadow-lg hover:scale-110 transition z-40"
-            >
-                <FaWhatsapp size={24} />
-            </a>
-
         </footer>
     );
 }
