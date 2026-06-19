@@ -494,7 +494,7 @@
 // CONFIG — change this if your backend
 // runs on a different port
 // ═══════════════════════════════════════
-const API = 'http://localhost:5000/api';
+const API = window.location.origin + '/api';
 
 // ═══════════════════════════════════════
 // HELPERS
@@ -512,7 +512,7 @@ function showAlert(msg, type='success') {
 function imgSrc(filename) {
   if (!filename) return '';
   if (filename.startsWith('http')) return filename;
-  return `http://localhost:5000/uploads/${filename}`;
+  return window.location.origin + `/uploads/${filename}`;
 }
 
 async function apiFetch(path, options={}) {
