@@ -10,6 +10,8 @@ export default function AdminPortal() {
     const [authMode, setAuthMode] = useState("login"); // login
     const [showAuthPassword, setShowAuthPassword] = useState(false);
     const [showUserPassword, setShowUserPassword] = useState(false);
+    const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+    const [isSidebarHovered, setIsSidebarHovered] = useState(false);
 
     // Auth Forms
     const [authForm, setAuthForm] = useState({ name: "", email: "", password: "" });
@@ -709,12 +711,34 @@ export default function AdminPortal() {
             )}
 
             {/* ── SIDEBAR ── */}
-            <aside className="w-64 bg-[#050a14] border-right border-[#1a2a3a] flex flex-col fixed top-0 left-0 bottom-0 z-40">
-                <div className="p-6 border-b border-[#1a2a3a]">
-                    <h2 className="text-lg font-bold text-cyan-400 tracking-wider">Embed AIoT</h2>
-                    <p className="text-[11px] text-gray-500 mt-1 uppercase font-semibold">Admin Panel</p>
+            <aside 
+                onMouseEnter={() => isSidebarCollapsed && setIsSidebarHovered(true)}
+                onMouseLeave={() => setIsSidebarHovered(false)}
+                className={`bg-[#050a14] border-r border-[#1a2a3a] flex flex-col fixed top-0 left-0 bottom-0 transition-all duration-300 ${
+                    (!isSidebarCollapsed || isSidebarHovered) ? "w-64 z-50 shadow-2xl" : "w-16 z-40"
+                }`}
+            >
+                <div className={`p-4 border-b border-[#1a2a3a] flex items-center ${
+                    (!isSidebarCollapsed || isSidebarHovered) ? "justify-between px-6" : "justify-center"
+                }`}>
+                    {(!isSidebarCollapsed || isSidebarHovered) && (
+                        <div className="transition-opacity duration-300">
+                            <h2 className="text-lg font-bold text-cyan-400 tracking-wider">Embed AIoT</h2>
+                            <p className="text-[11px] text-gray-500 mt-1 uppercase font-semibold">Admin Panel</p>
+                        </div>
+                    )}
+                    <button 
+                        onClick={() => {
+                            setIsSidebarCollapsed(!isSidebarCollapsed);
+                            setIsSidebarHovered(false);
+                        }}
+                        className="p-1.5 rounded-lg bg-[#0d1829] border border-[#1a2a3a] text-cyan-400 hover:text-white hover:bg-cyan-500 hover:text-black transition duration-200"
+                        title={isSidebarCollapsed ? "Expand Sidebar" : "Collapse Sidebar"}
+                    >
+                        {isSidebarCollapsed ? "▶" : "◀"}
+                    </button>
                 </div>
-                <nav className="flex-1 py-4 space-y-1">
+                <nav className="flex-1 py-4 space-y-1 overflow-x-hidden">
                     {(() => {
                         const tabs = [
                             { id: "dashboard", label: "Dashboard", icon: "📊" },
@@ -732,14 +756,21 @@ export default function AdminPortal() {
                             <button
                                 key={tab.id}
                                 onClick={() => { setActiveTab(tab.id); setEditId(""); }}
-                                className={`w-full flex items-center gap-3 px-6 py-3 text-sm font-medium transition text-left border-l-4 ${
+                                className={`w-full flex items-center transition duration-200 border-l-4 ${
                                     activeTab === tab.id
                                         ? "text-cyan-400 bg-[#0d1829] border-cyan-400"
                                         : "text-gray-400 border-transparent hover:text-cyan-400 hover:bg-[#0d1829]"
+                                } ${
+                                    (!isSidebarCollapsed || isSidebarHovered) 
+                                        ? "gap-3 px-6 py-3 justify-start text-left" 
+                                        : "px-0 py-3 justify-center"
                                 }`}
+                                title={isSidebarCollapsed && !isSidebarHovered ? tab.label : undefined}
                             >
-                                <span>{tab.icon}</span>
-                                <span>{tab.label}</span>
+                                <span className="text-lg">{tab.icon}</span>
+                                {(!isSidebarCollapsed || isSidebarHovered) && (
+                                    <span className="text-sm font-medium whitespace-nowrap transition-opacity duration-300">{tab.label}</span>
+                                )}
                             </button>
                         ));
                     })()}
@@ -747,15 +778,19 @@ export default function AdminPortal() {
                 <div className="p-4 border-t border-[#1a2a3a]">
                     <button
                         onClick={handleLogout}
-                        className="w-full py-2.5 bg-slate-800 border border-slate-700 text-gray-400 font-bold text-sm rounded-lg hover:bg-red-600 hover:text-white hover:border-red-600 transition"
+                        className="w-full py-2.5 bg-slate-800 border border-slate-700 text-gray-400 font-bold text-sm rounded-lg hover:bg-red-600 hover:text-white hover:border-red-600 transition flex items-center justify-center gap-2"
+                        title="Sign Out"
                     >
-                        🚪 Sign Out
+                        <span>🚪</span>
+                        {(!isSidebarCollapsed || isSidebarHovered) && <span>Sign Out</span>}
                     </button>
                 </div>
             </aside>
 
             {/* ── MAIN CONTENT ── */}
-            <main className="ml-64 flex-1 p-8 min-h-screen">
+            <main className={`flex-1 p-8 min-h-screen transition-all duration-300 ${
+                isSidebarCollapsed ? "ml-16" : "ml-64"
+            }`}>
 
                 {/* Dashboard Tab */}
                 {activeTab === "dashboard" && (
