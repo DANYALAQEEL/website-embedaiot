@@ -21,7 +21,7 @@ graph TD
     end
 
     SPA -->|API Requests| API
-    API -->|HTTPS Request (Secure Key)| Relay
+    API -->|Secure HTTPS Request| Relay
     Relay -->|SMTP Secure SSL| Gmail
     API -->|Mongoose DB Operations| Db
 ```
