@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
 import { API_URL } from "../config";
 
 export default function AdminPortal() {
@@ -619,6 +620,13 @@ export default function AdminPortal() {
             <div className="min-h-screen bg-black text-white flex items-center justify-center px-4 py-28 relative overflow-hidden">
                 <div className="absolute top-[-200px] left-[-200px] w-[700px] h-[700px] bg-cyan-400/20 blur-[180px] rounded-full"></div>
                 <div className="absolute bottom-[-200px] right-[-200px] w-[700px] h-[700px] bg-amber-500/10 blur-[150px] rounded-full"></div>
+
+                <Link 
+                    to="/" 
+                    className="absolute top-6 left-6 z-20 flex items-center gap-2 px-4 py-2 rounded-xl bg-white/5 border border-white/10 text-gray-300 hover:text-white hover:bg-white/10 hover:border-white/25 transition duration-300 text-sm font-medium backdrop-blur-md"
+                >
+                    ← Back to Website
+                </Link>
 
                 <div className="relative z-10 w-full max-w-md bg-white/5 border border-white/10 rounded-3xl p-8 backdrop-blur-xl shadow-2xl">
                     <div className="text-center mb-8">
