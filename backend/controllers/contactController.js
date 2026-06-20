@@ -1,5 +1,6 @@
 const Contact = require("../models/Contact");
 const nodemailer = require("nodemailer");
+const dns = require("dns");
 
 // EMAIL SETUP
 const transporter = nodemailer.createTransport({
@@ -7,6 +8,10 @@ const transporter = nodemailer.createTransport({
   auth: {
     user: process.env.EMAIL_USER,
     pass: process.env.EMAIL_PASS,
+  },
+  // Force IPv4 lookup because Hugging Face / some environments have unrouted IPv6
+  lookup: (hostname, options, callback) => {
+    dns.lookup(hostname, { ...options, family: 4 }, callback);
   },
 });
 
@@ -26,7 +31,7 @@ const createContact = async (req, res) => {
     if (process.env.EMAIL_USER && process.env.EMAIL_PASS) {
       // Send notification to admin
       transporter.sendMail({
-        from: `"${name}" <${email}>`,
+        from: `"${name} (via Website)" <${process.env.EMAIL_USER}>`,
         replyTo: email,
         to: process.env.EMAIL_RECEIVER || "embedaiot@gmail.com",      
         subject: `New Contact Message from ${name}: ${subject}`,
@@ -36,7 +41,7 @@ const createContact = async (req, res) => {
 
       // Send confirmation to visitor
       transporter.sendMail({
-        from: process.env.EMAIL_USER,
+        from: `"Embed AIoT" <${process.env.EMAIL_USER}>`,
         to: email,
         subject: "We received your message — Embed AIoT",
         html: `
