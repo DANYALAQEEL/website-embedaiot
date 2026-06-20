@@ -22,25 +22,23 @@ const createContact = async (req, res) => {
     const newContact = new Contact({ name, email, subject, message });
     await newContact.save();
 
-    // send emails
+    // Send emails in the background (non-blocking)
     if (process.env.EMAIL_USER && process.env.EMAIL_PASS) {
-      // STEP 3 — send email to your client
-      await transporter.sendMail({
+      // Send notification to admin
+      transporter.sendMail({
         from: `"${name}" <${email}>`,
         replyTo: email,
         to: process.env.EMAIL_RECEIVER || "embedaiot@gmail.com",      
         subject: `New Contact Message from ${name}: ${subject}`,
         text: `Hi, I am ${name}.\n\n${message}`,
         html: `<p>Hi, I am <strong>${name}</strong>.</p><p>${message}</p>`,
-      });
+      }).catch(err => console.error("Error sending admin notification email:", err));
 
-      // STEP 4 — send confirmation email to the person who contacted
-      await transporter.sendMail({
-
+      // Send confirmation to visitor
+      transporter.sendMail({
         from: process.env.EMAIL_USER,
-        to: email,                       // sends to the visitor
+        to: email,
         subject: "We received your message — Embed AIoT",
-
         html: `
           <h2>Thank you for contacting Embed AIoT, ${name}!</h2>
           <p>We have received your message and will get back to you shortly.</p>
@@ -51,8 +49,7 @@ const createContact = async (req, res) => {
           <p>Best regards,</p>
           <p><strong>Embed AIoT Team</strong></p>
         `,
-
-      });
+      }).catch(err => console.error("Error sending visitor confirmation email:", err));
     } else {
       console.log("----------------------------------------");
       console.log("EMAIL CREDENTIALS NOT CONFIGURED IN DEV ENV.");
@@ -62,14 +59,15 @@ const createContact = async (req, res) => {
       console.log("----------------------------------------");
     }
 
-    res.status(201).json({
+    // Respond immediately to the client
+    return res.status(201).json({
       success: true,
       message: "Message sent successfully",
       data: newContact,
     });
 
   } catch (error) {
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       message: error.message,
     });
