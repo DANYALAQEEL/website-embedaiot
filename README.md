@@ -1,142 +1,156 @@
-# Embed AIoT Monorepo
+# Embed AIoT Monorepo & System Architecture
 
-Welcome to the **Embed AIoT** repository! This is a unified, production-ready monorepo combining the high-end React-based company website (Frontend) and the robust Node.js/Express REST API (Backend). It is engineered for seamless scalability, local testability out-of-the-box, and administrative security.
-
----
-
-## 🚀 Key Features
-
-### Frontend (Vite + React)
-- **High-End Aesthetics**: Dark-mode primary design featuring glassmorphism, glowing micro-interactions, smooth CSS/Framer Motion transitions, and fully responsive layouts.
-- **Dynamic Content Injection**: Fetches portfolios, services, team members, and stories dynamically from backend APIs, with graceful static fallbacks if the API is offline.
-- **Embedded Admin Portal**: Secure, React-based control panel built directly into the navbar `/admin` path for managing all website content.
-- **Role-Based Access Control (RBAC)**: Distinguishes between `admin` (full user & content control) and `staff` (read/write content, no user management) access levels.
-- **Session Auto-Sign Out**: Automatically logs out users after 60 minutes of inactivity (tracking keyboard, mouse, scroll, and touch events) to secure sessions.
-
-### Backend (Node.js + Express)
-- **Zero-Config Dev Fallback**: Connects to MongoDB Atlas in production, and automatically boots a local in-memory MongoDB server (`mongodb-memory-server`) in development if no connection string is provided.
-- **Nodemailer console logging**: Prints sent email contact details directly to the console if SMTP credentials are not configured in development, keeping testing functional.
-- **Token-Based Authentication**: Secure JSON Web Token (JWT) verification for dashboard endpoints.
-- **Seeded Master Admin**: Automatically authenticates master administrative logins using hardcoded fallback credentials (`admin@embedaiot.com` / `admin12345`) if the database is unseeded.
+Welcome to the **Embed AIoT** monorepo! This repository merges the high-end React-based company website (Frontend) and the Node.js/Express REST API (Backend). It is engineered for seamless scalability, local testability, and administrative control.
 
 ---
 
-## 📁 Project Structure
+## 🗺️ System Architecture & Mail Pipeline
 
+```mermaid
+graph TD
+    subgraph Frontend [Vite + React Host: Vercel]
+        SPA["React SPA (Client App)"]
+        Relay["Serverless HTTPS Relay (/api/send-email)"]
+    end
+    subgraph Backend [Express Host: Hugging Face Spaces]
+        API["Node.js REST API"]
+        Db["MongoDB Atlas (Cloud DB)"]
+    end
+    subgraph Mail [SMTP Delivery]
+        Gmail["Gmail SMTP Server"]
+    end
+
+    SPA -->|API Requests| API
+    API -->|HTTPS Request (Secure Key)| Relay
+    Relay -->|SMTP Secure SSL| Gmail
+    API -->|Mongoose DB Operations| Db
 ```
-website-embedaiot/
-├── backend/                  # Node.js + Express Server
-│   ├── config/               # DB Connection & env configurations
-│   ├── controllers/          # Request handlers (products, admin, contact)
-│   ├── middleware/           # Auth token validator
-│   ├── models/               # Mongoose DB Schemas (Product, Service, Team)
-│   ├── routes/               # API Router setup
-│   └── server.js             # Main server entrypoint
-├── frontend/                 # Vite + React Client
-│   ├── src/
-│   │   ├── components/       # Reusable layout & sections (Navbar, Footer)
-│   │   ├── data/             # Static fallback catalog (products.js, portfolioData.js)
-│   │   ├── pages/            # Page components (AdminPortal, Solutions, ProductsPage)
-│   │   ├── config.js         # API base endpoint config
-│   │   ├── App.jsx           # Routing & App entry
-│   │   └── main.jsx          # DOM entry
-└── README.md                 # Project Documentation
+
+---
+
+## 📅 Visual Development Roadmap & History
+
+Below is a detailed log of all milestones, features added, bugs resolved, and structural enhancements.
+
+```mermaid
+timeline
+    title Feature Additions & Bugfixes
+    Section Core Setup
+        Vite + React SPA : Project initialized, CSS glassmorphism styling
+        Express Backend  : API routing, schema design, Local DB fallback
+    Section Security & Auth
+        JWT Verification : Token validation, role-based controls (admin/staff)
+        60m Inactivity   : Automatic user logout on keyboard/mouse idle
+        Back Button      : Glassy 'Back to Website' link on admin login screen
+    Section Layout & UI
+        Header/Footer Hiding : Main Navbar/Footer hidden on /admin route
+        Collapsible Sidebar  : Manual toggle with hover-expand overlay (z-50)
+    Section Mail Pipeline
+        Vercel Relay     : Bypassed HF Spaces SMTP block using HTTPS (443)
+        DMARC/SPF Fix    : Set 'from' to authenticated Gmail with 'replyTo' header
+        IPv4 DNS Lookup  : Enforced family:4 connection to avoid IPv6 timeouts
 ```
+
+### Bugfix & Modification History
+
+| Component | Issue | Root Cause | Resolution |
+| :--- | :--- | :--- | :--- |
+| **Email Submissions** | Emails not delivered to `embedaiot@gmail.com` | Hugging Face Spaces block direct SMTP outbound ports (25/465/587). | Developed an HTTPS-based serverless email relay in `frontend/api/send-email.js` on Vercel. The backend fetches this relay securely. |
+| **SPF/DMARC Rejection** | Messages from strict domains (e.g. `@seecs.edu.pk`) discarded. | Direct sender spoofing (`from: visitor@example.com`) violates SPF/DMARC rules. | Set authenticated address `embedaiot@gmail.com` as the sender. Placed visitor's email in `replyTo` so replies work. |
+| **IPv6 Timeout** | Backend email dispatch hangs / fails with `ENETUNREACH`. | Node 17+ defaults to IPv6, which is unsupported/unrouted on Hugging Face container grids. | Programmed a custom dns `lookup` function in Nodemailer to force IPv4 (`family: 4`) resolution. |
+| **Vercel Routing** | Reloading `/admin` returned Vercel `404 Not Found`. | Vercel SPA router did not know how to handle direct page requests. | Added `vercel.json` rewrite configuration at the project root to route page requests to `/index.html`. |
+| **Admin Navbar Clipping** | Site navbar blocked dashboard statistics and footer overlapped sidebar. | Admin page was wrapped inside the global `MainLayout` layout container. | Modified `MainLayout.jsx` with `useLocation` to dynamically hide global navbar, footer, and whatsapp button on `/admin`. |
+| **Collapsible Sidebar** | Sidebar took up too much screen space. | Fixed width `w-64` was hardcoded. | Refactored sidebar to manually collapse (`w-16`). Added transition animations and `onMouseEnter` to auto-expand to `w-64` on hover. |
 
 ---
 
 ## 🛠️ Local Installation & Development
 
-To launch both the frontend and backend servers concurrently with a single command:
+To launch both the frontend and backend servers concurrently:
 
-1. **Clone the repository** (if not already local)
-2. **Install all dependencies** from the root folder:
+1. **Install dependencies** in both workspaces:
    ```bash
    npm run install-all
    ```
-3. **Start the development servers**:
+2. **Start development servers**:
    ```bash
    npm run dev
    ```
-   - **Frontend** will be running at `http://localhost:5173/`
-   - **Backend** API will be running at `http://localhost:5000/`
+   * **Frontend Client**: `http://localhost:5173/`
+   * **Backend API**: `http://localhost:5000/`
 
 ---
 
-## ⚙️ Configuration (.env)
+## ⚙️ Active Environment Details (Secrets & URLs)
 
-The servers are configured to run with default fallback values out-of-the-box, but you can customize settings using local environment files:
+Use this directory to restore active state in future chat sessions:
 
-### Backend Configuration (`backend/.env`)
-Create a `.env` file in the `backend/` folder:
-```env
-PORT=5000
-MONGODB_URI=your_mongodb_connection_string
-JWT_SECRET=your_jwt_signing_secret
-EMAIL_USER=your_smtp_email
-EMAIL_PASS=your_smtp_password
+* **Production URL (Frontend)**: `https://embedaiot81.vercel.app`
+* **Production API (Backend)**: `https://embedaiot-embedaiot-api.hf.space`
+* **Health API Endpoint**: `https://embedaiot-embedaiot-api.hf.space/api/health`
+* **MongoDB Connection URI**: *[Configured via MONGODB_URI secret in HF Space settings]*
+* **Hugging Face Hub API Token**: *[Refer to local deploy_backend.py or keyring]*
+* **Admin Access Credentials**:
+  * **Email**: `admin@embedaiot.com`
+  * **Password**: `admin12345`
+* **Monitoring**: **Uptime Robot** actively checks `https://embedaiot81.vercel.app` and `https://embedaiot-embedaiot-api.hf.space/api/health` to prevent backend sleeping.
+
+---
+
+## 🚀 Operations & Maintenance Guide (Step-by-Step)
+
+Follow these steps exactly when updating the codebase, deploying changes, or checking server health:
+
+### Step 1: Synchronize Git Codebases
+Make sure changes are committed and pushed to both the spec/staging repo and the user's primary repo:
+```bash
+# Add files and commit
+git add .
+git commit -m "Your detailed commit message"
+
+# Push to primary user repo
+git push original main
+
+# Push to staging spec repo
+git push origin main
 ```
 
-### Frontend Configuration (`frontend/.env`)
-Create a `.env` file in the `frontend/` folder:
-```env
-VITE_API_URL=http://localhost:5000
-```
+### Step 2: Deploy Frontend Updates to Vercel
+Vercel automatically triggers deployments upon git pushes. To trigger a manual production deployment:
+1. Navigate to the root directory.
+2. Run the deployment command:
+   ```bash
+   npx vercel --prod --yes
+   ```
+3. Ensure the environment secrets (`EMAIL_RELAY_SECRET`, `EMAIL_USER`, `EMAIL_PASS`) are updated in Vercel settings if credentials change.
+
+### Step 3: Deploy Backend Updates to Hugging Face
+The backend runs on a Hugging Face Space. Run the helper python script to package and upload changes:
+1. Verify python dependency is active: `pip install huggingface_hub`.
+2. Run the upload script:
+   ```bash
+   python deploy_backend.py
+   ```
+3. If database credentials change, run:
+   ```bash
+   python update_space_secrets.py
+   ```
+4. To check live Hugging Face Space application logs and save them locally, run:
+   ```bash
+   python get_space_logs.py
+   ```
+
+### Step 4: Verify Uptime & Health
+To ensure the Hugging Face Space does not enter "sleeping" status:
+1. Access the Uptime Robot dashboard.
+2. Confirm two active monitors:
+   * **Frontend Monitor**: HTTP(s) ping to `https://embedaiot81.vercel.app` (5-minute interval).
+   * **Backend Monitor**: HTTP(s) ping to `https://embedaiot-embedaiot-api.hf.space/api/health` (5-minute interval).
+3. If the backend returns `503` or fails, run `python get_space_logs.py` to diagnose.
 
 ---
 
-## 🔑 Administrative Access
+## 🔑 Permissions & Roles Overview
 
-To access the control panel, go to the **Admin** link in the navbar or navigate directly to `http://localhost:5173/admin`:
-
-- **Master Credentials**:
-  - **Email**: `admin@embedaiot.com`
-  - **Password**: `admin12345`
-- **Role Permissions**:
-  - **Admin**: Can create/delete staff accounts via the `Staff & Admins` tab, view submitted inbox messages, and add/edit/delete all website content.
-  - **Staff**: Can read/write portfolio projects, services, products, team profiles, and stories, but does not have user management privileges.
-
----
-
-## 🖼️ Application Visuals & Walkthroughs
-
-Below is a look at the web application and its control panel in action:
-
-### 1. Products & Solutions Catalog
-The website dynamically displays products like the Air Purifier, Soil Moisture Meter, and Soil NPK Meter, customized to the company's brand styling.
-![Products Catalog](docs/images/media__1781692916243.png)
-
----
-
-### 2. Admin Portal - Login
-Secure authentication interface for admins and staff members.
-![Admin Portal Login](docs/images/media__1781674566145.png)
-
----
-
-### 3. Admin Portal - Dashboard & Stats
-Overview panel showcasing website statistics (total projects, products, services, and inbox messages) with quick-access action shortcuts.
-![Admin Dashboard](docs/images/media__1781674903433.png)
-
----
-
-### 4. Admin Portal - Products Manager
-Content creation and upload tools for managing items in the dynamic catalog.
-![Products Manager](docs/images/media__1781693428275.png)
-
----
-
-### 5. Admin Portal - Staff & User Accounts Management
-Available only to users with the `admin` role to add and delete portal accounts.
-![Staff Management](docs/images/media__1781693889496.png)
-
----
-
-### 6. Interactive Contact Forms
-Floating communication widgets (WhatsApp button) and inline contact forms configured to route directly to SMTP email or console logging fallbacks.
-![Contact Form](docs/images/media__1781694151933.png)
-
----
-
-## 📝 License
-This project is licensed under the MIT License - see the LICENSE file for details.
+* **Admin Role**: Full control over content categories (portfolio, service, product, team, story) + Staff account creation/deletion.
+* **Staff Role**: Full content authoring permissions, but cannot view, edit, or delete other Staff profiles.
