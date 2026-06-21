@@ -21,60 +21,89 @@ import {
 } from "lucide-react";
 
 import { motion, AnimatePresence } from "framer-motion";
-import { Activity, useState } from "react";
+import { Activity, useState, useEffect } from "react";
+import { API_URL } from "../config";
 
-
+const staticServices = [
+    {
+        title: "Embedded Systems",
+        desc: "Advanced hardware and firmware solutions for intelligent connected products.",
+        points: [
+            { icon: <Cpu size={18} />, text: "Firmware" },
+            { icon: <Wifi size={18} />, text: "IoT Devices" },
+            { icon: <ShieldCheck size={18} />, text: "Security" }
+        ]
+    },
+    {
+        title: "Mechanical Solutions",
+        desc: "Precision engineering and 3D modeling to transform complex concepts into physical hardware.",
+        points: [
+            { icon: <Settings size={18} />, text: "CAD Modeling" },
+            { icon: <Cpu size={18} />, text: "Structural Analysis" },
+            { icon: <Wrench size={18} />, text: "Prototyping" }
+        ]
+    },
+    {
+        title: "Industrial AIoT",
+        desc: "Smart monitoring and automation systems for modern industries.",
+        points: [
+            { icon: <Wifi size={18} />, text: "Monitoring" },
+            { icon: <Cpu size={18} />, text: "Control Systems" },
+            { icon: <Cloud size={18} />, text: "Analytics" }
+        ]
+    },
+    {
+        title: "Electrical Systems",
+        desc: "Smart monitoring and automation systems for modern industries.",
+        points: [
+            { icon: <Zap size={18} />, text: "PCB Design" },
+            { icon: <Activity size={18} />, text: "Power Management" },
+            { icon: <Radio size={18} />, text: "Signal Integrity" }
+        ]
+    },
+    {
+        title: "3D Printing Services",
+        desc: "Smart monitoring and automation systems for modern industries.",
+        points: [
+            { icon: <Layers size={18} />, text: "Rapid Prototyping" },
+            { icon: <Box size={18} />, text: "Functional End Parts" },
+            { icon: <Component size={18} />, text: "Material Selection" }
+        ]
+    }
+];
 
 function Services() {
     const [activeStat, setActiveStat] = useState(0);
+    const [serviceList, setServiceList] = useState(staticServices);
 
-    const services = [
-        {
-            title: "Embedded Systems",
-            desc: "Advanced hardware and firmware solutions for intelligent connected products.",
-            points: [
-                { icon: <Cpu size={18} />, text: "Firmware" },
-                { icon: <Wifi size={18} />, text: "IoT Devices" },
-                { icon: <ShieldCheck size={18} />, text: "Security" }
-            ]
-        },
-        {
-            title: "Mechanical Solutions",
-            desc: "Precision engineering and 3D modeling to transform complex concepts into production-ready physical hardware.",
-            points: [
-                { icon: <Settings size={18} />, text: "CAD Modeling" },
-                { icon: <Cpu size={18} />, text: "Structural Analysis" },
-                { icon: <Wrench size={18} />, text: "Prototyping" }
-            ]
-        },
-        {
-            title: "Industrial AIoT",
-            desc: "Smart monitoring and automation systems for modern industries.",
-            points: [
-                { icon: <Wifi size={18} />, text: "Monitoring" },
-                { icon: <Cpu size={18} />, text: "Control Systems" },
-                { icon: <Cloud size={18} />, text: "Analytics" }
-            ]
-        },
-        {
-            title: "Electrical Systems",
-            desc: "Smart monitoring and automation systems for modern industries.",
-            points: [
-                { icon: <Zap size={18} />, text: "PCB Design" },
-                { icon: <Activity size={18} />, text: "Power Management" },
-                { icon: <Radio size={18} />, text: "Signal Integrity" }
-            ]
-        },
-        {
-            title: "3D Printing Services",
-            desc: "Smart monitoring and automation systems for modern industries.",
-            points: [
-                { icon: <Layers size={18} />, text: "Rapid Prototyping" },
-                { icon: <Box size={18} />, text: "Functional End Parts" },
-                { icon: <Component size={18} />, text: "Material Selection" }
-            ]
-        }
-    ];
+    useEffect(() => {
+        fetch(`${API_URL}/api/services`)
+            .then(res => {
+                if (!res.ok) throw new Error("API error");
+                return res.json();
+            })
+            .then(data => {
+                if (Array.isArray(data) && data.length > 0) {
+                    const mapped = data.map(s => ({
+                        title: s.title,
+                        desc: s.description,
+                        points: [
+                            { icon: <Wrench size={18} />, text: s.category || "Engineering Service" },
+                            { icon: <Cpu size={18} />, text: "Professional Integration" }
+                        ]
+                    }));
+                    
+                    const combined = [...staticServices];
+                    mapped.forEach(s => {
+                        if (!combined.some(cs => cs.title.toLowerCase() === s.title.toLowerCase())) {
+                            combined.push(s);
+                        }
+                    });
+                    setServiceList(combined);
+                }
+            })
+            .catch(err => console.log("Failed to fetch services, using static:", err));
+    }, []);
 
     const industries = [
         { title: "Industrial Automation", icon: <Factory size={30} />, desc: "Smart industrial monitoring and automation systems." },
@@ -166,7 +195,7 @@ function Services() {
 
             {/* ── SERVICE CARDS ── */}
             <div className="relative z-10 max-w-7xl mx-auto grid sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6 mb-14 sm:mb-20">
-                {services.map((service, index) => (
+                {serviceList.map((service, index) => (
                     <motion.div
                         key={index}
                         whileHover={{ y: -8, scale: 1.02 }}
