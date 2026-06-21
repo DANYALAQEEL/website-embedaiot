@@ -291,7 +291,10 @@ export default function AdminPortal() {
     const getImgUrl = (path) => {
         if (!path) return "";
         if (path.startsWith("http")) return path;
-        return `${API_URL}${path}`;
+        if (path.startsWith("/uploads/")) return `${API_URL}${path}`;
+        if (path.startsWith("uploads/")) return `${API_URL}/${path}`;
+        if (path.startsWith("/")) return `${API_URL}/uploads${path}`;
+        return `${API_URL}/uploads/${path}`;
     };
 
     // ── PORTFOLIO ACTIONS ──

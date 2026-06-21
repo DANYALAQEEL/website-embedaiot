@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { API_URL } from "../config";
+import { API_URL, getImgUrl } from "../config";
 import { motion } from "framer-motion";
 import {
     Search,
@@ -114,7 +114,7 @@ function About() {
                         const memberObj = {
                             name: m.name,
                             role: m.role,
-                            image: m.image ? (m.image.startsWith("http") ? m.image : (m.image.startsWith("/") ? `${API_URL}${m.image}` : `${API_URL}/${m.image}`)) : "/placeholder.png"
+                            image: getImgUrl(m.image)
                         };
 
                         const group = updatedGroups.find(g => g.department.toLowerCase() === m.department.toLowerCase());

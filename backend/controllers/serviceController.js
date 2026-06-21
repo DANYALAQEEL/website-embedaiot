@@ -3,7 +3,11 @@ const Service = require("../models/Service");
 // CREATE SERVICE
 const createService = async (req, res) => {
   try {
-    const service = await Service.create(req.body);
+    const serviceData = { ...req.body };
+    if (req.file) {
+      serviceData.image = req.file.filename;
+    }
+    const service = await Service.create(serviceData);
     res.status(201).json(service);
   } catch (err) {
     res.status(500).json({ message: err.message });
@@ -36,12 +40,16 @@ const getSingleService = async (req, res) => {
 // UPDATE SERVICE
 const updateService = async (req, res) => {
   try {
+    const updateData = { ...req.body };
+    if (req.file) {
+      updateData.image = req.file.filename;
+    }
     const service = await Service.findByIdAndUpdate(
       req.params.id,
-      req.body,
+      updateData,
       { new: true } 
     );
-if (!service) {
+    if (!service) {
       return res.status(404).json({ message: "Service not found" });
     }
     res.json(service);

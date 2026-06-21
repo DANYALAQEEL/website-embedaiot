@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import staticProducts from "../data/products";
-import { API_URL } from "../config";
+import { API_URL, getImgUrl } from "../config";
 
 export default function ProductsPage() {
     const [productList, setProductList] = useState(staticProducts);
@@ -19,7 +19,7 @@ export default function ProductsPage() {
                         slug: p.slug,
                         name: p.title || p.name,
                         category: p.category,
-                        image: p.image ? (p.image.startsWith("http") ? p.image : (p.image.startsWith("/") ? `${API_URL}${p.image}` : `${API_URL}/${p.image}`)) : "/placeholder.png",
+                        image: getImgUrl(p.image),
                         description: p.description,
                         technologies: p.technologies || [],
                         features: p.features || []

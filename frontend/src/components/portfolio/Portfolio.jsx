@@ -1,7 +1,7 @@
 import { portfolioProjects } from "../../data/portfolioData";
 import PortfolioCard from "./PortfolioCard";
 import { useState, useEffect } from "react";
-import { API_URL } from "../../config";
+import { API_URL, getImgUrl } from "../../config";
 
 function Portfolio() {
     const [activeFilter, setActiveFilter] = useState("All");
@@ -19,7 +19,7 @@ function Portfolio() {
                         id: p._id,
                         title: p.title,
                         category: p.category,
-                        image: p.image ? (p.image.startsWith("http") ? p.image : (p.image.startsWith("/") ? `${API_URL}${p.image}` : `${API_URL}/${p.image}`)) : "/placeholder.png",
+                        image: getImgUrl(p.image),
                         description: p.description,
                         technologies: p.technologies || []
                     }));
