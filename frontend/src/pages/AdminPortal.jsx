@@ -49,6 +49,7 @@ export default function AdminPortal() {
     const [serviceForm, setServiceForm] = useState({ title: "", category: "", description: "", featured: "false" });
     const [productForm, setProductForm] = useState({ title: "", price: "", category: "", description: "", technologies: "", features: "", featured: "false" });
     const [teamForm, setTeamForm] = useState({ name: "", role: "", department: "", featured: "false" });
+    const [customDept, setCustomDept] = useState("");
     const [storyForm, setStoryForm] = useState({ title: "", description: "", order: "1" });
     const [userForm, setUserForm] = useState({ name: "", email: "", password: "", role: "staff" });
 
@@ -473,7 +474,8 @@ export default function AdminPortal() {
     // ── TEAM ACTIONS ──
     const saveTeamMember = async (e) => {
         e.preventDefault();
-        if (!teamForm.name || !teamForm.role || !teamForm.department) {
+        const deptToSave = teamForm.department === "__NEW_CUSTOM__" ? customDept.trim() : teamForm.department;
+        if (!teamForm.name || !teamForm.role || !deptToSave) {
             return triggerAlert("Name, role and department required", "error");
         }
         if (!editId && !uploadedFile) {
@@ -483,7 +485,7 @@ export default function AdminPortal() {
         const form = new FormData();
         form.append("name", teamForm.name);
         form.append("role", teamForm.role);
-        form.append("department", teamForm.department);
+        form.append("department", deptToSave);
         form.append("featured", teamForm.featured);
         if (uploadedFile) form.append("image", uploadedFile);
 
@@ -525,6 +527,7 @@ export default function AdminPortal() {
     const clearTeamForm = () => {
         setEditId("");
         setTeamForm({ name: "", role: "", department: "", featured: "false" });
+        setCustomDept("");
         setUploadedFile(null);
     };
 
@@ -617,6 +620,12 @@ export default function AdminPortal() {
         }
     };
 
+
+    const defaultDepartments = ["Director & CEO", "Team Leads", "Research & Development", "Sales & Marketing", "Engineering", "Design"];
+    const customDepartments = Array.isArray(team)
+        ? [...new Set(team.map(m => m.department).filter(d => d && !defaultDepartments.includes(d)))]
+        : [];
+    const allDepartments = [...defaultDepartments, ...customDepartments];
 
     if (!isLoggedIn) {
         return (
@@ -1193,13 +1202,17 @@ export default function AdminPortal() {
                                         <label className="text-[11px] text-gray-400 font-semibold uppercase">Department</label>
                                         <select value={teamForm.department} onChange={e => setTeamForm({ ...teamForm, department: e.target.value })}>
                                             <option value="">Select department</option>
-                                            <option value="Director & CEO">Director & CEO</option>
-                                            <option value="Team Leads">Team Leads</option>
-                                            <option value="Research & Development">Research & Development</option>
-                                            <option value="Sales & Marketing">Sales & Marketing</option>
-                                            <option value="Engineering">Engineering</option>
-                                            <option value="Design">Design</option>
+                                            {allDepartments.map(d => (
+                                                <option key={d} value={d}>{d}</option>
+                                            ))}
+                                            <option value="__NEW_CUSTOM__">+ Add Custom Department...</option>
                                         </select>
+                                        {teamForm.department === "__NEW_CUSTOM__" && (
+                                            <div className="flex flex-col gap-1.5 mt-2">
+                                                <label className="text-[11px] text-gray-400 font-semibold uppercase">Custom Department Name</label>
+                                                <input type="text" required placeholder="e.g. Hardware Engineering" value={customDept} onChange={e => setCustomDept(e.target.value)} />
+                                            </div>
+                                        )}
                                     </div>
                                     <div className="flex flex-col gap-1.5">
                                         <label className="text-[11px] text-gray-400 font-semibold uppercase">Featured (Highlight)</label>
