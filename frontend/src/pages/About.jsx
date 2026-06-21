@@ -1,5 +1,5 @@
-// Add these icons in your import statement at the top of AboutUs.jsx
-
+import { useState, useEffect } from "react";
+import { API_URL } from "../config";
 import { motion } from "framer-motion";
 import {
     Search,
@@ -23,7 +23,120 @@ import researcher2Img from "../assets/persons/Kashif-Janjua.jpeg";
 import researcher3Img from "../assets/persons/8.jpeg";
 import marketing1Img from "../assets/persons/4.png";
 import marketing2Img from "../assets/persons/a.png";
+
+const staticTeamGroups = [
+    {
+        department: "Director & CEO",
+        icon: <Crown size={22} />,
+        members: [
+            {
+                name: "Dr Shahzad Younis",
+                role: "Founder and Chief Executive Officer",
+                image: ceoImg
+            }
+        ]
+    },
+
+    {
+        department: "Team Leads",
+        icon: <Users size={22} />,
+        members: [
+            {
+                name: "Muhammad Tayyab",
+                role: "Product Development Engineer",
+                image: teamLead1Img
+            },
+            {
+                name: "Muhammad Tayyab",
+                role: "Design Engineer",
+                image: teamLead2Img
+            }
+        ]
+    },
+
+    {
+        department: "Research & Development",
+        icon: <FlaskConical size={22} />,
+        members: [
+            {
+                name: "Muhammad Uzair",
+                role: "Design Engineer",
+                image: researcher1Img
+            },
+            {
+                name: "Kashif Janjua",
+                role: "Team Member",
+                image: researcher2Img
+            },
+            {
+                name: "Nazish Zulfiqar",
+                role: "Senior Research Scientist",
+                image: researcher3Img
+            }
+        ]
+    },
+
+    {
+        department: "Sales & Marketing",
+        icon: <Megaphone size={22} />,
+        members: [
+            {
+                name: "Nida Nabeel",
+                role: "Media Manager",
+                image: marketing1Img
+            },
+            {
+                name: "Naveen Akbar",
+                role: "Product Designer",
+                image: marketing2Img
+            }
+        ]
+    }
+];
+
 function About() {
+    const [teamList, setTeamList] = useState(staticTeamGroups);
+
+    useEffect(() => {
+        fetch(`${API_URL}/api/team`)
+            .then(res => {
+                if (!res.ok) throw new Error("API error");
+                return res.json();
+            })
+            .then(data => {
+                if (Array.isArray(data) && data.length > 0) {
+                    const updatedGroups = staticTeamGroups.map(g => ({
+                        ...g,
+                        members: [...g.members]
+                    }));
+
+                    data.forEach(m => {
+                        const memberObj = {
+                            name: m.name,
+                            role: m.role,
+                            image: m.image ? (m.image.startsWith("http") ? m.image : (m.image.startsWith("/") ? `${API_URL}${m.image}` : `${API_URL}/${m.image}`)) : "/placeholder.png"
+                        };
+
+                        const group = updatedGroups.find(g => g.department.toLowerCase() === m.department.toLowerCase());
+                        if (group) {
+                            if (!group.members.some(mem => mem.name.toLowerCase() === m.name.toLowerCase())) {
+                                group.members.push(memberObj);
+                            }
+                        } else {
+                            updatedGroups.push({
+                                department: m.department,
+                                icon: <Users size={22} />,
+                                members: [memberObj]
+                            });
+                        }
+                    });
+
+                    setTeamList(updatedGroups);
+                }
+            })
+            .catch(err => console.log("Failed to fetch team members, using static:", err));
+    }, []);
+
     const teamGroups = [
         {
             department: "Director & CEO",
@@ -523,7 +636,7 @@ function About() {
                     {/* Department Groups */}
                     <div className="space-y-14 sm:space-y-24">
 
-                        {teamGroups.map((group, groupIndex) => (
+                        {teamList.map((group, groupIndex) => (
                             <div key={groupIndex}>
 
                                 {/* Department Header */}
