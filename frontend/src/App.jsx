@@ -2,6 +2,7 @@ import { Routes, Route } from "react-router-dom";
 import MainLayout from "./layouts/MainLayout";
 
 import Hero from "./components/Hero";
+import PosterReel from "./components/PosterReel";
 import SolutionsSection from "./components/Solutions";
 import WorkShowcase from "./components/WorkShowcase";
 import PartnersInvestors from "./components/PartnersInvestors";
@@ -24,6 +25,7 @@ function HomePage() {
   return (
     <>
       <Reveal><Hero /></Reveal>
+      <Reveal><PosterReel /></Reveal>
       <Reveal><SolutionsSection /></Reveal>
       <Reveal><WorkShowcase /></Reveal>
       <Reveal><PartnersInvestors /></Reveal>
