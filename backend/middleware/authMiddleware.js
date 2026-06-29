@@ -1,4 +1,5 @@
 const jwt = require("jsonwebtoken");
+const Admin = require("../models/Admin");
 
 const protect = async (req, res, next) => {
   try {
@@ -16,6 +17,16 @@ const protect = async (req, res, next) => {
         token,
         process.env.JWT_SECRET || "default_dev_secret_key_12345"
       );
+
+      // Verify user exists in database (except for master_admin session)
+      if (decoded.id !== "master_admin") {
+        const userExists = await Admin.findById(decoded.id);
+        if (!userExists) {
+          return res.status(401).json({
+            message: "Not authorized, user account no longer exists",
+          });
+        }
+      }
 
       req.admin = decoded;
       next();

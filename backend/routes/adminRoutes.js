@@ -6,12 +6,16 @@ const {
   loginAdmin,
   getUsers,
   deleteUser,
+  forgotPassword,
+  resetPassword,
 } = require("../controllers/adminController");
 
 const { protect, adminOnly } = require("../middleware/authMiddleware");
 
-// LOGIN (Public)
+// LOGIN & PASSWORD RECOVERY (Public)
 router.post("/login", loginAdmin);
+router.post("/forgot-password", forgotPassword);
+router.post("/reset-password", resetPassword);
 
 // ADMIN ONLY MANAGEMENT ROUTES
 router.post("/register", protect, adminOnly, registerAdmin);

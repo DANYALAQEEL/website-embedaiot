@@ -19,7 +19,32 @@ const storyRoutes = require("./routes/storyRoutes");
 const app = express();
 
 connectDB();
-app.use(cors());
+
+// CORS Whitelist Configuration
+const allowedOrigins = [
+  "http://localhost:5173",
+  "http://localhost:3000",
+  "http://127.0.0.1:5173",
+  "http://localhost:5174",
+  "http://127.0.0.1:5174"
+];
+
+app.use(cors({
+  origin: function (origin, callback) {
+    if (!origin) return callback(null, true);
+    
+    const isVercel = origin.endsWith(".vercel.app");
+    const isAllowedLocal = allowedOrigins.indexOf(origin) !== -1;
+    
+    if (isVercel || isAllowedLocal) {
+      return callback(null, true);
+    } else {
+      return callback(new Error("CORS policy violation: Access from specified Origin is denied."), false);
+    }
+  },
+  credentials: true
+}));
+
 app.use(express.json());
 
 app.use("/uploads", express.static("uploads"));
