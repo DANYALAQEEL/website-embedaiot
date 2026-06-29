@@ -17,10 +17,25 @@ const seedAdmin = async () => {
         role: "admin",
       });
       console.log(`✅ Default admin account seeded in database: ${email}`);
-    } else if (masterAdmin.role !== "admin") {
-      masterAdmin.role = "admin";
-      await masterAdmin.save();
-      console.log(`✅ Default admin account role updated to 'admin': ${email}`);
+    } else {
+      let modified = false;
+      if (masterAdmin.role !== "admin") {
+        masterAdmin.role = "admin";
+        modified = true;
+        console.log(`✅ Default admin account role updated to 'admin': ${email}`);
+      }
+
+      // Check if password matches env config, if not, sync it
+      const isMatch = await bcrypt.compare(password, masterAdmin.password);
+      if (!isMatch) {
+        masterAdmin.password = await bcrypt.hash(password, 10);
+        modified = true;
+        console.log(`✅ Default admin account password synced with env variable: ${email}`);
+      }
+
+      if (modified) {
+        await masterAdmin.save();
+      }
     }
   } catch (error) {
     console.error("❌ Seeding admin failed:", error);
