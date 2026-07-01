@@ -1,5 +1,4 @@
 const Contact = require("../models/Contact");
-const nodemailer = require("nodemailer");
 
 // ─── In-memory OTP store ───────────────────────────────────────────────────
 // Structure: { [email]: { otp, name, subject, message, expiresAt } }
@@ -10,16 +9,6 @@ const OTP_TTL_MS = 5 * 60 * 1000; // 5 minutes
 
 function generateOtp() {
   return Math.floor(100000 + Math.random() * 900000).toString();
-}
-
-function createTransporter() {
-  return nodemailer.createTransport({
-    service: "gmail",
-    auth: {
-      user: process.env.EMAIL_USER,
-      pass: process.env.EMAIL_PASS,
-    },
-  });
 }
 
 // ─── STEP 1: Send OTP to the user's email ─────────────────────────────────
@@ -51,23 +40,34 @@ const sendOtp = async (req, res) => {
       }
     }, OTP_TTL_MS + 1000);
 
-    // Send OTP email via Gmail
-    const transporter = createTransporter();
-    await transporter.sendMail({
-      from: `"Embed AIoT" <${process.env.EMAIL_USER}>`,
-      to: email,
-      subject: "Your Verification Code — Embed AIoT",
-      html: `
-        <div style="font-family: Arial, sans-serif; max-width: 480px; margin: 0 auto; padding: 32px; border: 1px solid #e5e7eb; border-radius: 12px;">
-          <h2 style="color: #1f2937; margin-bottom: 8px;">Email Verification</h2>
-          <p style="color: #6b7280; margin-bottom: 24px;">Hi <strong>${name}</strong>, use the code below to verify your email and send your message to Embed AIoT.</p>
-          <div style="background: #fef3c7; border-radius: 8px; padding: 24px; text-align: center; margin-bottom: 24px;">
-            <p style="font-size: 40px; font-weight: 900; letter-spacing: 12px; color: #92400e; margin: 0;">${otp}</p>
+    // Send OTP email via Vercel email relay
+    const relayUrl = "https://embedaiot81.vercel.app/api/send-email";
+    const secret = "embedaiot_relay_secret_2026_key";
+
+    const relayRes = await fetch(relayUrl, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        secret,
+        to: email,
+        subject: "Your Verification Code — Embed AIoT",
+        html: `
+          <div style="font-family: Arial, sans-serif; max-width: 480px; margin: 0 auto; padding: 32px; border: 1px solid #e5e7eb; border-radius: 12px;">
+            <h2 style="color: #1f2937; margin-bottom: 8px;">Email Verification</h2>
+            <p style="color: #6b7280; margin-bottom: 24px;">Hi <strong>${name}</strong>, use the code below to verify your email and send your message to Embed AIoT.</p>
+            <div style="background: #fef3c7; border-radius: 8px; padding: 24px; text-align: center; margin-bottom: 24px;">
+              <p style="font-size: 40px; font-weight: 900; letter-spacing: 12px; color: #92400e; margin: 0;">${otp}</p>
+            </div>
+            <p style="color: #9ca3af; font-size: 13px;">This code expires in <strong>5 minutes</strong>. If you did not request this, please ignore this email.</p>
           </div>
-          <p style="color: #9ca3af; font-size: 13px;">This code expires in <strong>5 minutes</strong>. If you did not request this, please ignore this email.</p>
-        </div>
-      `,
+        `,
+      })
     });
+
+    if (!relayRes.ok) {
+      const errData = await relayRes.json().catch(() => ({}));
+      throw new Error(errData.message || errData.error || "Email relay returned non-OK status");
+    }
 
     return res.status(200).json({
       success: true,
