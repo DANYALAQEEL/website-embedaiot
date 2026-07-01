@@ -19,6 +19,7 @@ export default function Footer() {
         subject: "",
         message: "",
     });
+    const [emailError, setEmailError] = useState("");
     const [submitting, setSubmitting] = useState(false);
 
     const socials = [
@@ -30,16 +31,41 @@ export default function Footer() {
 
     const whatsappNumber = "923335436531"; // change this
 
+    const validateEmail = (value) => {
+        if (!value) {
+            setEmailError("");
+            return true;
+        }
+        const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+        if (!emailRegex.test(value)) {
+            setEmailError("Please enter a valid email address (e.g., name@example.com)");
+            return false;
+        }
+        setEmailError("");
+        return true;
+    };
+
     const handleChange = (e) => {
+        const { name, value } = e.target;
         setFormData({
             ...formData,
-            [e.target.name]: e.target.value,
+            [name]: value,
         });
+        if (name === "email") {
+            validateEmail(value);
+        }
     };
 
     const sendEmail = async (e) => {
         e.preventDefault();
         if (submitting) return;
+
+        // Perform final email validation check
+        if (!validateEmail(formData.email)) {
+            alert("The email address you entered is not valid. Please correct it before sending.");
+            return;
+        }
+
         setSubmitting(true);
 
         try {
@@ -54,6 +80,7 @@ export default function Footer() {
             if (res.ok) {
                 alert("Message sent successfully!");
                 setFormData({ name: "", email: "", subject: "", message: "" });
+                setEmailError("");
             } else {
                 alert("Failed to send message.");
             }
@@ -178,24 +205,35 @@ export default function Footer() {
                             <input
                                 type="text"
                                 name="name"
+                                required
                                 placeholder="Your Name"
                                 value={formData.name}
                                 onChange={handleChange}
                                 className="w-full px-3 py-2.5 bg-white/5 border border-white/10 text-white text-sm rounded-lg placeholder:text-gray-500 focus:outline-none focus:border-amber-400/50 transition"
                             />
 
-                            <input
-                                type="email"
-                                name="email"
-                                placeholder="Your Email"
-                                value={formData.email}
-                                onChange={handleChange}
-                                className="w-full px-3 py-2.5 bg-white/5 border border-white/10 text-white text-sm rounded-lg placeholder:text-gray-500 focus:outline-none focus:border-amber-400/50 transition"
-                            />
+                            <div className="space-y-1">
+                                <input
+                                    type="email"
+                                    name="email"
+                                    required
+                                    placeholder="Your Email"
+                                    value={formData.email}
+                                    onChange={handleChange}
+                                    onBlur={(e) => validateEmail(e.target.value)}
+                                    className={`w-full px-3 py-2.5 bg-white/5 border ${
+                                        emailError ? "border-red-500/50 focus:border-red-500" : "border-white/10 focus:border-amber-400/50"
+                                    } text-white text-sm rounded-lg placeholder:text-gray-500 focus:outline-none transition`}
+                                />
+                                {emailError && (
+                                    <p className="text-red-400 text-xs pl-1 font-medium">{emailError}</p>
+                                )}
+                            </div>
 
                             <input
                                 type="text"
                                 name="subject"
+                                required
                                 placeholder="Subject"
                                 value={formData.subject}
                                 onChange={handleChange}
@@ -204,6 +242,7 @@ export default function Footer() {
 
                             <textarea
                                 name="message"
+                                required
                                 placeholder="Your Message"
                                 value={formData.message}
                                 onChange={handleChange}
