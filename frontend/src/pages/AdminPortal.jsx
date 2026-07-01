@@ -16,6 +16,7 @@ export default function AdminPortal() {
 
     // Auth Forms
     const [authForm, setAuthForm] = useState({ name: "", email: "", password: "" });
+    const [resetForm, setResetForm] = useState({ email: "", token: "", newPassword: "" });
     const [authError, setAuthError] = useState("");
     const [authSuccess, setAuthSuccess] = useState("");
 
@@ -91,6 +92,17 @@ export default function AdminPortal() {
             loadTabData(activeTab, storedToken);
         }
     }, [activeTab, isLoggedIn]);
+
+    // Check for forgot password token in URL
+    useEffect(() => {
+        const queryParams = new URLSearchParams(window.location.search);
+        const tokenParam = queryParams.get("token");
+        const emailParam = queryParams.get("email");
+        if (tokenParam && emailParam) {
+            setAuthMode("reset");
+            setResetForm({ email: emailParam, token: tokenParam, newPassword: "" });
+        }
+    }, []);
 
     const loadDashboardCounts = async (authToken) => {
         const fetchCount = async (endpoint) => {
@@ -195,6 +207,54 @@ export default function AdminPortal() {
             setIsLoggedIn(true);
             setAuthSuccess("Login successful!");
             setActiveTab("dashboard");
+        } catch (err) {
+            setAuthError(err.message);
+        }
+    };
+
+    const handleForgotPasswordSubmit = async (e) => {
+        e.preventDefault();
+        setAuthError("");
+        setAuthSuccess("");
+        try {
+            const res = await fetch(`${API_URL}/api/admin/forgot-password`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ email: authForm.email })
+            });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.message || "Failed to send reset link");
+            setAuthSuccess(data.message || "Reset link sent successfully!");
+        } catch (err) {
+            setAuthError(err.message);
+        }
+    };
+
+    const handleResetPasswordSubmit = async (e) => {
+        e.preventDefault();
+        setAuthError("");
+        setAuthSuccess("");
+        try {
+            const res = await fetch(`${API_URL}/api/admin/reset-password`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ 
+                    email: resetForm.email, 
+                    token: resetForm.token, 
+                    newPassword: resetForm.newPassword 
+                })
+            });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.message || "Failed to reset password");
+            setAuthSuccess(data.message || "Password reset successfully!");
+            
+            // Clear query params from browser address bar
+            window.history.replaceState({}, document.title, window.location.pathname);
+            
+            setTimeout(() => {
+                setAuthMode("login");
+                setAuthSuccess("");
+            }, 2500);
         } catch (err) {
             setAuthError(err.message);
         }
@@ -650,68 +710,182 @@ export default function AdminPortal() {
                         </p>
                     </div>
 
-                    <form onSubmit={handleAuthSubmit} className="space-y-5">
-                        <div>
-                            <label className="block text-xs font-semibold text-gray-400 mb-1 uppercase tracking-wider">Email Address</label>
-                            <input
-                                type="email"
-                                required
-                                className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-amber-400 transition"
-                                placeholder="admin@embedaiot.com"
-                                value={authForm.email}
-                                onChange={e => setAuthForm({ ...authForm, email: e.target.value })}
-                            />
-                        </div>
-
-                        <div>
-                            <label className="block text-xs font-semibold text-gray-400 mb-1 uppercase tracking-wider">Password</label>
-                            <div className="relative">
+                    {authMode === "login" && (
+                        <form onSubmit={handleAuthSubmit} className="space-y-5">
+                            <div>
+                                <label className="block text-xs font-semibold text-gray-400 mb-1 uppercase tracking-wider">Email Address</label>
                                 <input
-                                    type={showAuthPassword ? "text" : "password"}
+                                    type="email"
                                     required
-                                    className="w-full bg-white/5 border border-white/10 rounded-xl pl-4 pr-12 py-3 text-white focus:outline-none focus:border-amber-400 transition"
-                                    placeholder="••••••••"
-                                    value={authForm.password}
-                                    onChange={e => setAuthForm({ ...authForm, password: e.target.value })}
+                                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-amber-400 transition"
+                                    placeholder="admin@embedaiot.com"
+                                    value={authForm.email}
+                                    onChange={e => setAuthForm({ ...authForm, email: e.target.value })}
                                 />
-                                <button
-                                    type="button"
-                                    onClick={() => setShowAuthPassword(!showAuthPassword)}
-                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white bg-transparent border-none cursor-pointer p-1 focus:outline-none flex items-center justify-center"
-                                >
-                                    {showAuthPassword ? (
-                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
-                                            <path strokeLinecap="round" strokeLinejoin="round" d="M3.98 8.223A10.477 10.477 0 001.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.45 10.45 0 0112 4.5c4.756 0 8.773 3.162 10.065 7.498a10.523 10.523 0 01-4.293 5.774M6.228 6.228L3 3m3.228 3.228l3.65 3.65m7.894 7.894L21 21m-3.228-3.228l-3.65-3.65m0 0a3 3 0 10-4.243-4.243m4.242 4.242L9.88 9.88" />
-                                        </svg>
-                                    ) : (
-                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
-                                            <path strokeLinecap="round" strokeLinejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" />
-                                            <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                        </svg>
-                                    )}
-                                </button>
                             </div>
-                        </div>
 
-                        {authError && (
-                            <div className="bg-red-500/10 border border-red-500/30 text-red-400 text-sm rounded-xl p-3">
-                                {authError}
+                            <div>
+                                <div className="flex justify-between items-center mb-1">
+                                    <label className="block text-xs font-semibold text-gray-400 uppercase tracking-wider">Password</label>
+                                    <button
+                                        type="button"
+                                        onClick={() => { setAuthMode("forgot"); setAuthError(""); setAuthSuccess(""); }}
+                                        className="text-xs text-amber-400 hover:text-amber-300 hover:underline bg-transparent border-none p-0 focus:outline-none cursor-pointer"
+                                    >
+                                        Forgot Password?
+                                    </button>
+                                </div>
+                                <div className="relative">
+                                    <input
+                                        type={showAuthPassword ? "text" : "password"}
+                                        required
+                                        className="w-full bg-white/5 border border-white/10 rounded-xl pl-4 pr-12 py-3 text-white focus:outline-none focus:border-amber-400 transition"
+                                        placeholder="••••••••"
+                                        value={authForm.password}
+                                        onChange={e => setAuthForm({ ...authForm, password: e.target.value })}
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowAuthPassword(!showAuthPassword)}
+                                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white bg-transparent border-none cursor-pointer p-1 focus:outline-none flex items-center justify-center"
+                                    >
+                                        {showAuthPassword ? (
+                                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
+                                                <path strokeLinecap="round" strokeLinejoin="round" d="M3.98 8.223A10.477 10.477 0 001.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.45 10.45 0 0112 4.5c4.756 0 8.773 3.162 10.065 7.498a10.523 10.523 0 01-4.293 5.774M6.228 6.228L3 3m3.228 3.228l3.65 3.65m7.894 7.894L21 21m-3.228-3.228l-3.65-3.65m0 0a3 3 0 10-4.243-4.243m4.242 4.242L9.88 9.88" />
+                                            </svg>
+                                        ) : (
+                                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
+                                                <path strokeLinecap="round" strokeLinejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" />
+                                                <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                            </svg>
+                                        )}
+                                    </button>
+                                </div>
                             </div>
-                        )}
 
-                        {authSuccess && (
-                            <div className="bg-green-500/10 border border-green-500/30 text-green-400 text-sm rounded-xl p-3">
-                                {authSuccess}
+                            {authError && (
+                                <div className="bg-red-500/10 border border-red-500/30 text-red-400 text-sm rounded-xl p-3">
+                                    {authError}
+                                </div>
+                            )}
+
+                            {authSuccess && (
+                                <div className="bg-green-500/10 border border-green-500/30 text-green-400 text-sm rounded-xl p-3">
+                                    {authSuccess}
+                                </div>
+                            )}
+
+                            <button
+                                type="submit"
+                                className="w-full py-3 bg-gradient-to-r from-amber-400 to-yellow-500 text-black font-bold rounded-xl hover:scale-[1.02] transition duration-300"
+                            >
+                                Sign In
+                            </button>
+                        </form>
+                    )}
+
+                    {authMode === "forgot" && (
+                        <form onSubmit={handleForgotPasswordSubmit} className="space-y-5">
+                            <p className="text-sm text-gray-300">
+                                Enter your email address below, and we will send you a secure link to reset your password.
+                            </p>
+                            <div>
+                                <label className="block text-xs font-semibold text-gray-400 mb-1 uppercase tracking-wider">Email Address</label>
+                                <input
+                                    type="email"
+                                    required
+                                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-amber-400 transition"
+                                    placeholder="admin@embedaiot.com"
+                                    value={authForm.email}
+                                    onChange={e => setAuthForm({ ...authForm, email: e.target.value })}
+                                />
                             </div>
-                        )}
 
-                        <button
-                            type="submit"
-                            className="w-full py-3 bg-gradient-to-r from-amber-400 to-yellow-500 text-black font-bold rounded-xl hover:scale-[1.02] transition duration-300"
-                        >
-                            Sign In
-                        </button>
-                    </form>
+                            {authError && (
+                                <div className="bg-red-500/10 border border-red-500/30 text-red-400 text-sm rounded-xl p-3">
+                                    {authError}
+                                </div>
+                            )}
+
+                            {authSuccess && (
+                                <div className="bg-green-500/10 border border-green-500/30 text-green-400 text-sm rounded-xl p-3">
+                                    {authSuccess}
+                                </div>
+                            )}
+
+                            <button
+                                type="submit"
+                                className="w-full py-3 bg-gradient-to-r from-amber-400 to-yellow-500 text-black font-bold rounded-xl hover:scale-[1.02] transition duration-300"
+                            >
+                                Send Reset Link
+                            </button>
+
+                            <button
+                                type="button"
+                                onClick={() => { setAuthMode("login"); setAuthError(""); setAuthSuccess(""); }}
+                                className="w-full text-center text-sm text-gray-400 hover:text-white bg-transparent border-none mt-2 cursor-pointer focus:outline-none"
+                            >
+                                Back to Login
+                            </button>
+                        </form>
+                    )}
+
+                    {authMode === "reset" && (
+                        <form onSubmit={handleResetPasswordSubmit} className="space-y-5">
+                            <p className="text-sm text-gray-300">
+                                Enter your new administrator password below to reset your credentials.
+                            </p>
+                            <div>
+                                <label className="block text-xs font-semibold text-gray-400 mb-1 uppercase tracking-wider">Email Address</label>
+                                <input
+                                    type="email"
+                                    required
+                                    readOnly
+                                    className="w-full bg-white/10 border border-white/10 rounded-xl px-4 py-3 text-gray-400 focus:outline-none"
+                                    value={resetForm.email}
+                                />
+                            </div>
+
+                            <div>
+                                <label className="block text-xs font-semibold text-gray-400 mb-1 uppercase tracking-wider">New Password</label>
+                                <input
+                                    type="password"
+                                    required
+                                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-amber-400 transition"
+                                    placeholder="••••••••"
+                                    value={resetForm.newPassword}
+                                    onChange={e => setResetForm({ ...resetForm, newPassword: e.target.value })}
+                                />
+                            </div>
+
+                            {authError && (
+                                <div className="bg-red-500/10 border border-red-500/30 text-red-400 text-sm rounded-xl p-3">
+                                    {authError}
+                                </div>
+                            )}
+
+                            {authSuccess && (
+                                <div className="bg-green-500/10 border border-green-500/30 text-green-400 text-sm rounded-xl p-3">
+                                    {authSuccess}
+                                </div>
+                            )}
+
+                            <button
+                                type="submit"
+                                className="w-full py-3 bg-gradient-to-r from-amber-400 to-yellow-500 text-black font-bold rounded-xl hover:scale-[1.02] transition duration-300"
+                            >
+                                Reset Password
+                            </button>
+
+                            <button
+                                type="button"
+                                onClick={() => { setAuthMode("login"); setAuthError(""); setAuthSuccess(""); }}
+                                className="w-full text-center text-sm text-gray-400 hover:text-white bg-transparent border-none mt-2 cursor-pointer focus:outline-none"
+                            >
+                                Back to Login
+                            </button>
+                        </form>
+                    )}
                 </div>
             </div>
         );
