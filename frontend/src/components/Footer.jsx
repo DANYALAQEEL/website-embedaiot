@@ -82,10 +82,21 @@ export default function Footer() {
                 setFormData({ name: "", email: "", subject: "", message: "" });
                 setEmailError("");
             } else {
-                alert("Failed to send message.");
+                // Parse the actual error message from the backend (e.g. invalid email, mailbox not found)
+                let errorMessage = "Failed to send message. Please try again.";
+                try {
+                    const errorData = await res.json();
+                    if (errorData && errorData.message) {
+                        errorMessage = errorData.message;
+                    }
+                } catch (_) { /* ignore parse errors */ }
+                setEmailError(errorMessage);
+                alert(errorMessage);
             }
         } catch (error) {
-            alert("Server error");
+            const msg = "Could not reach the server. Please check your connection and try again.";
+            setEmailError(msg);
+            alert(msg);
         } finally {
             setSubmitting(false);
         }

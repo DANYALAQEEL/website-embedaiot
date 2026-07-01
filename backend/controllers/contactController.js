@@ -1,4 +1,5 @@
 const Contact = require("../models/Contact");
+const emailValidator = require("deep-email-validator");
 
 // CREATE CONTACT MESSAGE
 const createContact = async (req, res) => {
@@ -9,10 +10,35 @@ const createContact = async (req, res) => {
       return res.status(400).json({ message: "All fields required" });
     }
 
-    // Validate email format
-    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
-    if (!emailRegex.test(email)) {
-      return res.status(400).json({ message: "Please enter a valid email address." });
+    // Validate email format and existence
+    try {
+      const emailValidation = await emailValidator.validate({
+        email,
+        sender: "info@embedaiot.com",
+        validateRegex: true,
+        validateMx: true,
+        validateTypo: true,
+        validateDisposable: true,
+        validateSMTP: true,
+      });
+
+      if (!emailValidation.valid) {
+        const smtpResult = emailValidation.validators.smtp;
+        const isMailboxConfirmedInvalid = smtpResult && smtpResult.valid === false && smtpResult.reason === "Mailbox not found.";
+        
+        const otherValidatorsFailed = !emailValidation.validators.regex.valid ||
+                                      !emailValidation.validators.typo.valid ||
+                                      !emailValidation.validators.disposable.valid ||
+                                      !emailValidation.validators.mx.valid;
+                                      
+        if (otherValidatorsFailed || isMailboxConfirmedInvalid) {
+          return res.status(400).json({ 
+            message: "The email address you entered is not valid. Please check for spelling mistakes and ensure it exists." 
+          });
+        }
+      }
+    } catch (valError) {
+      console.error("Email verification engine error (ignoring):", valError);
     }
 
     const newContact = new Contact({ name, email, subject, message });
