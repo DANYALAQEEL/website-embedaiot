@@ -1,55 +1,128 @@
 const Contact = require("../models/Contact");
-const emailValidator = require("deep-email-validator");
+const nodemailer = require("nodemailer");
 
-// CREATE CONTACT MESSAGE
-const createContact = async (req, res) => {
+// ─── In-memory OTP store ───────────────────────────────────────────────────
+// Structure: { [email]: { otp, name, subject, message, expiresAt } }
+// OTPs live for 5 minutes then are auto-cleared
+const otpStore = new Map();
+
+const OTP_TTL_MS = 5 * 60 * 1000; // 5 minutes
+
+function generateOtp() {
+  return Math.floor(100000 + Math.random() * 900000).toString();
+}
+
+function createTransporter() {
+  return nodemailer.createTransport({
+    service: "gmail",
+    auth: {
+      user: process.env.EMAIL_USER,
+      pass: process.env.EMAIL_PASS,
+    },
+  });
+}
+
+// ─── STEP 1: Send OTP to the user's email ─────────────────────────────────
+const sendOtp = async (req, res) => {
   try {
-    const { name, email, subject, message } = req.body;  
-    
-    if (!name || !email || !subject || !message) {  
-      return res.status(400).json({ message: "All fields required" });
+    const { name, email, subject, message } = req.body;
+
+    if (!name || !email || !subject || !message) {
+      return res.status(400).json({ message: "All fields are required." });
     }
 
-    // Validate email format and existence
-    try {
-      const emailValidation = await emailValidator.validate({
-        email,
-        sender: "info@embedaiot.com",
-        validateRegex: true,
-        validateMx: true,
-        validateTypo: true,
-        validateDisposable: true,
-        validateSMTP: true,
-      });
+    // Basic format check
+    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+    if (!emailRegex.test(email)) {
+      return res.status(400).json({ message: "Please enter a valid email address format." });
+    }
 
-      if (!emailValidation.valid) {
-        const smtpResult = emailValidation.validators.smtp;
-        const isMailboxConfirmedInvalid = smtpResult && smtpResult.valid === false && smtpResult.reason === "Mailbox not found.";
-        
-        const otherValidatorsFailed = !emailValidation.validators.regex.valid ||
-                                      !emailValidation.validators.typo.valid ||
-                                      !emailValidation.validators.disposable.valid ||
-                                      !emailValidation.validators.mx.valid;
-                                      
-        if (otherValidatorsFailed || isMailboxConfirmedInvalid) {
-          return res.status(400).json({ 
-            message: "The email address you entered is not valid. Please check for spelling mistakes and ensure it exists." 
-          });
-        }
+    // Generate OTP and store it with the form data
+    const otp = generateOtp();
+    const expiresAt = Date.now() + OTP_TTL_MS;
+
+    otpStore.set(email.toLowerCase(), { otp, name, subject, message, expiresAt });
+
+    // Auto-delete after TTL to keep memory clean
+    setTimeout(() => {
+      const entry = otpStore.get(email.toLowerCase());
+      if (entry && entry.expiresAt <= Date.now()) {
+        otpStore.delete(email.toLowerCase());
       }
-    } catch (valError) {
-      console.error("Email verification engine error (ignoring):", valError);
+    }, OTP_TTL_MS + 1000);
+
+    // Send OTP email via Gmail
+    const transporter = createTransporter();
+    await transporter.sendMail({
+      from: `"Embed AIoT" <${process.env.EMAIL_USER}>`,
+      to: email,
+      subject: "Your Verification Code — Embed AIoT",
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 480px; margin: 0 auto; padding: 32px; border: 1px solid #e5e7eb; border-radius: 12px;">
+          <h2 style="color: #1f2937; margin-bottom: 8px;">Email Verification</h2>
+          <p style="color: #6b7280; margin-bottom: 24px;">Hi <strong>${name}</strong>, use the code below to verify your email and send your message to Embed AIoT.</p>
+          <div style="background: #fef3c7; border-radius: 8px; padding: 24px; text-align: center; margin-bottom: 24px;">
+            <p style="font-size: 40px; font-weight: 900; letter-spacing: 12px; color: #92400e; margin: 0;">${otp}</p>
+          </div>
+          <p style="color: #9ca3af; font-size: 13px;">This code expires in <strong>5 minutes</strong>. If you did not request this, please ignore this email.</p>
+        </div>
+      `,
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: "A 6-digit verification code has been sent to your email. Please check your inbox.",
+    });
+
+  } catch (error) {
+    console.error("sendOtp error:", error);
+    return res.status(500).json({
+      message: "Failed to send verification email. Please try again shortly.",
+    });
+  }
+};
+
+// ─── STEP 2: Verify OTP and save the contact message ──────────────────────
+const verifyOtpAndSave = async (req, res) => {
+  try {
+    const { email, otp } = req.body;
+
+    if (!email || !otp) {
+      return res.status(400).json({ message: "Email and verification code are required." });
     }
+
+    const entry = otpStore.get(email.toLowerCase());
+
+    if (!entry) {
+      return res.status(400).json({
+        message: "No verification code was found for this email. Please request a new one.",
+      });
+    }
+
+    if (Date.now() > entry.expiresAt) {
+      otpStore.delete(email.toLowerCase());
+      return res.status(400).json({
+        message: "Your verification code has expired. Please request a new one.",
+      });
+    }
+
+    if (entry.otp !== otp.toString().trim()) {
+      return res.status(400).json({ message: "Incorrect verification code. Please try again." });
+    }
+
+    // ✅ OTP is valid — save the contact message
+    const { name, subject, message } = entry;
+    otpStore.delete(email.toLowerCase()); // consume OTP — one-time use
 
     const newContact = new Contact({ name, email, subject, message });
     await newContact.save();
 
-    // Send emails in the background (non-blocking) via Vercel email relay
+    // Send confirmation emails in the background (non-blocking)
     if (process.env.EMAIL_USER && process.env.EMAIL_PASS) {
       const relayUrl = "https://embedaiot81.vercel.app/api/send-email";
       const secret = "embedaiot_relay_secret_2026_key";
 
-      // 1. Send notification to admin
+      // Notify admin
       fetch(relayUrl, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -59,17 +132,11 @@ const createContact = async (req, res) => {
           subject: `New Contact Message from ${name}: ${subject}`,
           text: `Hi, I am ${name}.\n\n${message}`,
           html: `<p>Hi, I am <strong>${name}</strong>.</p><p>${message}</p>`,
-          replyTo: email
-        })
-      }).then(r => {
-        if (!r.ok) {
-          return r.json().then(data => {
-            console.error("Vercel email relay failed for admin notification:", data.error || data.message);
-          });
-        }
-      }).catch(err => console.error("Error calling Vercel email relay for admin notification:", err));
+          replyTo: email,
+        }),
+      }).catch(err => console.error("Admin email relay error:", err));
 
-      // 2. Send confirmation to visitor
+      // Confirm to visitor
       fetch(relayUrl, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -86,52 +153,33 @@ const createContact = async (req, res) => {
             <br/>
             <p>Best regards,</p>
             <p><strong>Embed AIoT Team</strong></p>
-          `
-        })
-      }).then(r => {
-        if (!r.ok) {
-          return r.json().then(data => {
-            console.error("Vercel email relay failed for visitor confirmation:", data.error || data.message);
-          });
-        }
-      }).catch(err => console.error("Error calling Vercel email relay for visitor confirmation:", err));
-    } else {
-      console.log("----------------------------------------");
-      console.log("EMAIL CREDENTIALS NOT CONFIGURED IN DEV ENV.");
-      console.log("Logged Contact Message Details:");
-      console.log(`From Visitor: Name: ${name}, Email: ${email}, Subject: ${subject}`);
-      console.log(`Message: ${message}`);
-      console.log("----------------------------------------");
+          `,
+        }),
+      }).catch(err => console.error("Visitor confirmation email error:", err));
     }
 
-    // Respond immediately to the client
     return res.status(201).json({
       success: true,
-      message: "Message sent successfully",
-      data: newContact,
+      message: "Message sent successfully! We'll get back to you soon.",
     });
 
   } catch (error) {
-    return res.status(500).json({
-      success: false,
-      message: error.message,
-    });
+    console.error("verifyOtpAndSave error:", error);
+    return res.status(500).json({ message: error.message });
   }
 };
 
-// GET ALL CONTACTS — admin only
+// ─── GET ALL CONTACTS — admin only ────────────────────────────────────────
 const getContacts = async (req, res) => {
   try {
     const contacts = await Contact.find().sort({ date: -1 });
     res.json(contacts);
   } catch (error) {
-    res.status(500).json({
-      message: error.message,
-    });
+    res.status(500).json({ message: error.message });
   }
 };
 
-// DELETE CONTACT MESSAGE
+// ─── DELETE CONTACT MESSAGE ────────────────────────────────────────────────
 const deleteContact = async (req, res) => {
   try {
     const deleted = await Contact.findByIdAndDelete(req.params.id);
@@ -145,7 +193,8 @@ const deleteContact = async (req, res) => {
 };
 
 module.exports = {
-  createContact,
+  sendOtp,
+  verifyOtpAndSave,
   getContacts,
-  deleteContact, 
+  deleteContact,
 };

@@ -3,13 +3,15 @@ const router = express.Router();
 const { protect } = require("../middleware/authMiddleware");
 
 const {
-  createContact,
+  sendOtp,
+  verifyOtpAndSave,
   getContacts,
   deleteContact,
 } = require("../controllers/contactController");
 
-// PUBLIC — anyone can submit the form
-router.post("/", createContact);
+// PUBLIC — OTP flow (step 1: send code, step 2: verify code + save)
+router.post("/send-otp", sendOtp);
+router.post("/verify-otp", verifyOtpAndSave);
 
 // ADMIN ONLY — must be logged in
 router.get("/", protect, getContacts);
